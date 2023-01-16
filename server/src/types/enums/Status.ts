@@ -1,6 +1,6 @@
-export enum Status {
-  ERROR = "ERROR",
-  SUCCESS = "SUCCESS",
+export enum ResultStatus {
+  ERROR = "error",
+  SUCCESS = "success",
 }
 
 export enum ConnectionStatus {

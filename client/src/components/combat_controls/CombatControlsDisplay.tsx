@@ -1,14 +1,14 @@
-import { useGameContext } from "../contexts/GameContext";
+import { useGameControllerContext } from "../contexts/GameControllerContext";
 import { ChoiceInfoPanel } from "./ChoiceInfoPanel";
 import { useState, useEffect, useRef } from "react";
 import { BsHourglassSplit } from "react-icons/bs";
 import { GiFire, GiAxeSword } from "react-icons/gi";
 import { Grid, GridItem, Icon, Button, ButtonGroup, Stack, HStack } from '@chakra-ui/react'
-import Choice from "../types/Choices";
-import ChoiceButtonsDisplay from "./ChoiceButtonDisplay";
-export function ControlsDisplay() {
+import { Choice } from "../../types/ConnectionInterfaces";
+import CombatChoiceButtonsDisplay from "./CombatChoiceButtonDisplay";
+export function CombatControlsDisplay() {
 
-  const { gameState, choiceContext, sendChoice, controllerStatus } = useGameContext();
+  const { gameContext, choiceContext, sendChoice } = useGameControllerContext();
   const [selectedChoice, setSelectedChoice] = useState<Choice | null>(null);
   const [expanded, setExpanded] = useState<Choice[]>([]);
   const [hasChoices, setHasChoices] = useState(false);
@@ -33,7 +33,6 @@ export function ControlsDisplay() {
         choiceID: "",
 
         controllerKey: expanded[0].controllerKey,
-        type: choice.type,
         choiceName: expanded[0].choiceName,
         choiceDescription: expanded[0].choiceDescription,
         attachedData: expanded[0].attachedData,
@@ -110,7 +109,7 @@ export function ControlsDisplay() {
     >
       No controls to display
     </GridItem> :
-      <ChoiceButtonsDisplay
+      <CombatChoiceButtonsDisplay
         gridArea="main"
 
 

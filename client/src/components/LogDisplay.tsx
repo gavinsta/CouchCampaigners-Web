@@ -1,12 +1,15 @@
-import { useGameContext } from "../contexts/GameContext";
-import { useState, useRef } from "react";
-import { Button, Stack, Grid, GridItem, HStack, Input, List, ListItem, ListIcon } from '@chakra-ui/react'
+import { useGameControllerContext } from "./contexts/GameControllerContext";
+import { useState, useRef, useEffect } from "react";
+import { Button, Stack, Grid, GridItem, HStack, Input, List, ListItem, ListIcon, useToast } from '@chakra-ui/react'
 import { AiOutlineAlert, AiOutlineUser } from 'react-icons/ai'
 import { RiZzzFill } from 'react-icons/ri'
 import GameLog from "../types/GameLog";
+import { IncomingWSMessage, MessageType } from "../types/ClientWSMessage";
+import { useConnectionContext } from "./contexts/ConnectionContext";
 export function LogDisplay() {
-  const { fullLog, playerName, sendChat } = useGameContext();
+  const { sendWSText, roomInfo, fullLog } = useConnectionContext();
   const [text, setText] = useState<string>("");
+  const toast = useToast();
   const myRef = useRef(null)
 
   function formatLog(log: GameLog) {
@@ -25,13 +28,21 @@ export function LogDisplay() {
         </ListItem>
         );
     }
-
-
   }
+
 
   function sendMessage() {
     if (text) {
-      sendChat(text);
+      if (!roomInfo) {
+        toast({ title: 'Haven\'t joined a room!', description: 'You\'ve got nobody to talk to.', status: 'warning' })
+        return;
+      }
+      const message = {
+        type: MessageType.LOG,
+        header: "chat",
+        text: text,
+      }
+      sendWSText({ type: MessageType.LOG, header: "chat", text: text });
       setText("");
     }
   }

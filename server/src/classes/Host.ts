@@ -13,25 +13,7 @@ class Host {
     this.ws = ws;
     this.id = ws.id;
     this.status = ConnectionStatus.CONNECTED;
-  }
-  /**
-   * Connects the Host to a new websocket
-   * @param {WebSocket} ws 
-   */
-  connect(ws: ExtWebSocket) {
-    this.ws = ws;
-    if (ws.id) {
-      this.id = ws.id;
-    }
-    this.status = ConnectionStatus.CONNECTED
-  }
-  /**Disconnects the current host's connection */
-  disconnect() {
-    if (this.ws.readyState === ws.OPEN) {
-      this.ws.close();
-    }
-    this.id = ''
-    this.status = ConnectionStatus.DISCONNECTED
+    this.configureHostWebSocket();
   }
 
   configureHostWebSocket() {
@@ -42,49 +24,77 @@ class Host {
       return;
     });
     this.ws.on('message', (eventData: string) => {
+      console.log("***MESSAGE FROM HOST***")
+      console.log("**EVENT DATA");
+      console.log(eventData);
       const message = JSON.parse(eventData);
+      console.log(message);
       this.handleIncomingWSMessage(message);
     });
 
     this.ws.on('close', () => {
-      const text = `Host left the room.`;
+
       if (this.room) {
-        this.room.status.general = 'no_host';
-        this.room.broadcast(text);
-        console.log(this.room.printStats());
+        this.room.disconnectHost();
       }
     });
 
   }
   /**
-   * 
+   * These are all incoming messages sent from the HOST
    * @param message 
    * @returns 
    */
-  handleIncomingWSMessage(message: WSMessage) {
-    const room = this.room;
-    if (!room) {
-      console.log(`Received message for room from Host ${this.ws.id}, but room does not exist.`)
+  handleIncomingWSMessage(message: any) {
+
+    if (!this.room) {
+      console.error(`Received message for room from Host ${this.ws.id}, but room does not exist.`)
       return;
     }
-    if (message.type == "CHAT") {
-      message.sender = "host";
-      room.newLog(message);
-      console.log(`received message: ${message.text}`)
-      return;
-    }
+
     if (message.type == WSMessageType.LOG) {
-      room.newLog(message);
-      return;
+      this.room.newLog({ type: message.header, sender: message.sender, text: message.textData.text });
     }
-    if (message.type == "GAME_CONTEXT") {
-      room.parseGameContext(message);
-      return;
+    if (message.type == WSMessageType.ROOM) {
+
     }
-    if (message.type == "CHOICE_CONTEXT") {
-      room.parsePlayerChoiceContext(message);
+    if (message.type == WSMessageType.UPDATE) {
+      //console.log(`Received UPDATE message`)
+      switch (message.header) {
+        case "choice_context":
+          this.room.parsePlayerChoiceContext(message);
+          break;
+        case "game_context":
+          this.room.parseGameContext(message);
+      }
     }
+
+  }
+
+  /** Sending messages to the Unity Host requires subtly different JSONs. Data needs to be stringified to be parsed on C#-side. */
+  send(params: HostMessageParams) {
+    const { header, sender, type, controllerKey, data } = params
+    this.ws.send(JSON.stringify({
+      header: header,
+      sender: sender,
+      type: type,
+      controllerKey: controllerKey,
+      data: data,
+    }))
+
+    //console.log(`Sent to Host:`);
+    //console.log(params);
   }
 }
+interface HostMessageParams {
 
+  type: WSMessageType.FULL_LOG | WSMessageType.COMMAND | WSMessageType.REQUEST | WSMessageType.ROOM,
+  controllerKey?: string,
+  header: string,
+  sender: string,
+  title?: string,
+  text?: string
+  data?: any,
+
+}
 export default Host

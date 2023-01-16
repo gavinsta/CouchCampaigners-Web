@@ -1,13 +1,17 @@
 
-import { ConnectionStatus, Status } from "../types/enums/Status";
+import { ConnectionStatus, ResultStatus } from "../types/enums/Status";
 import GameLog from "../types/GameLog";
 import Result from "../types/Result";
+import { GameContext } from "../types/GameContext"
 import Host from "./Host";
 import Player from "./Player";
 import WebController from "./WebController";
 
 import { sendWSMessage } from "../utils/websocket_functions";
-import { WSMessage, WSMessageType } from "../types/WSMessage";
+import { WebControllerMessageType, WSMessage, WSMessageType } from "../types/WSMessage";
+import WebSocket from "ws";
+import ExtWebSocket from "./ExtWebSocket";
+import { Choice } from "../types/Choice";
 const TIMEOUT_DURATION = 3 * 60
 /** Room objects hold controllerKeys, controllers, hosts, players, etc 
  * and supporting functions
@@ -22,13 +26,13 @@ class Room {
   };
 
   /** Host object */
-  host: Host;
+  host: Host | null;
 
   /**Array of players */
   players: Player[];
 
   /**Map of controllers to player objects*/
-  controllers: WebController[];
+  controllers: Map<WebController, Player | null>;
 
   /**Settings object for the Room Object */
   settings = {
@@ -45,7 +49,7 @@ class Room {
   log: GameLog[];
 
   //TODO a game context object
-  gameContext = {};
+  gameContext: GameContext | null = null;
 
   /**Map of players to their choice contexts*/
   choiceContexts;
@@ -61,18 +65,37 @@ class Room {
   constructor(roomCode: string, controllerKeys: string[], host: Host) {
     this.roomCode = roomCode;
     this.host = host;
+    host.room = this;
     this.players = [];
     if (controllerKeys && controllerKeys.length > 0) {
-      this.controllers = controllerKeys.map(key => new WebController(key));
+      var allControllers = controllerKeys.map(key => new WebController(key));
+      this.controllers = new Map(allControllers.map(x => [x, null]))
       this.choiceContexts = new Map(controllerKeys.map(x => [x, '']),);
     }
     else {
-      this.controllers = [];
+      this.controllers = new Map();
       this.choiceContexts = new Map();
     }
     //start with empty log
     this.log = [];
 
+    //send a confirmation message to the host
+    const text = `Added new room: ${roomCode}.`;
+    console.log(text);
+
+    host.send({
+      type: WSMessageType.ROOM,
+      header: 'new_room',
+      sender: `room`,
+      title: 'New Room Created!',
+      text: text,
+      data: {
+        roomCode: roomCode,
+        status: 'open',
+        controllerKeys: controllerKeys,
+        text: this.printStats()
+      }
+    })
   }
 
   /**
@@ -81,36 +104,57 @@ class Room {
    */
   broadcast(text: string) {
     this.newLog({
-      type: WSMessageType.SERVER,
-      sender: 'server',
-      header: 'broadcast',
+      type: "broadcast",
+      sender: 'room',
       text: text,
-      time: new Date()
     });
+    console.log(text)
   }
 
   /**
    * Returns an integer by default of all the players in the game. 
-   * @param {bool} names If names = true, will isntead return
    */
-  countActivePlayers(names = false) {
-    if (names) {
-
-    }
-    else return this.players.length;
+  countActivePlayers() {
+    //TODO some logic for checking activity
+    return this.players.length;
   }
-  /**
-   * Adds a player to the room
-   * @param player 
-   */
-  addPlayer(player: Player) {
-    if (player.room) {
-      console.error(`${player.name} was already in Room: ${player.room.roomCode}!`)
 
-      player.room = this;
+  /**
+   * Join a room that is already open with the current player's name and websocket
+   * @param ws 
+   * @param playerName 
+   * @returns 
+   */
+  joinRoom(ws: ExtWebSocket, playerName: string) {
+    console.log(`${playerName} joining room ${this.roomCode} with ID: ${ws.id}`);
+    const existingPlayer = this.findPlayerByName(playerName);
+
+    if (existingPlayer && existingPlayer.ws.readyState === WebSocket.OPEN) {
+      //player exists and is connected...
+      const errorText = `"${playerName}" already exists in room ${this.roomCode}. Try a different name.\nClosing Connection.`;
+      sendWSMessage(ws, { type: WSMessageType.ROOM, header: "join_reject", sender: "room", title: "Player Already Exists", text: errorText });
+      ws.close();
+      return;
     }
-    console.log(`${player.name} joining room ${this.roomCode} with ID: ${player.id}`);
+    //create a new player!
+    const player = new Player(ws, playerName, this);
     this.players.push(player)
+
+    const text = `${playerName} joined room ${this.roomCode}.`;
+    player.send(
+      {
+        type: WebControllerMessageType.ROOM,
+        header: "join_success",
+        sender: "room",
+        textData: {
+          title: `Successfully Joined ${this.roomCode}`,
+        },
+        status: ResultStatus.SUCCESS,
+        data: { "roomCode": this.roomCode, "currentPlayers": this.countActivePlayers() }
+      }
+    )
+    this.broadcast(text);
+
   }
   /**
   * Use a WebSocket id to return a player object in the room.
@@ -196,7 +240,7 @@ class Room {
   }
 
   getController(controllerKey: string): WebController | null {
-    for (var controller of this.controllers) {
+    for (var controller of this.controllers.keys()) {
       if (controller.key === controllerKey) return controller;
     }
     return null;
@@ -209,10 +253,10 @@ class Room {
    */
   checkControllerAvailability(controllerKey: string) {
     //check that this is a key already added into the room
-    for (var controller of this.controllers) {
+    for (var controller of this.controllers.keys()) {
       if (controller.key == controllerKey) {
-        //disconnected controlle ready to use
-        if (controller.status === ConnectionStatus.DISCONNECTED) return true
+        //disconnected controller ready to use
+        if (controller.status === ConnectionStatus.DISCONNECTED && !this.controllers.get(controller)) return true
       }
     }
     //console.log(`Room ${this.roomCode} does not have controller with key: ${controllerKey}`);
@@ -235,9 +279,9 @@ class Room {
    */
   printControllerPairs() {
     let text = '';
-    for (const controller of this.controllers) {
-      if (controller.player) {
-        text += `${controller.key} => ${controller.player.name} \n`;
+    for (const pair of this.controllers) {
+      if (pair[1]) {
+        text += `${pair[0].key} => ${pair[1].name} \n`;
       }
     }
     return text;
@@ -273,9 +317,9 @@ class Room {
   * @param {Host} host
   */
   //TODO this method should act to connect a NEW host to the room (replacing the previous host, if any)
-  connectNewHost(host: Host) {
-    this.host.disconnect()
+  reconnectHost(host: Host) {
     this.host = host;
+    host.room = this;
     const connectMessage = `Host connected to room ${this.roomCode}`;
     this.broadcast(connectMessage);
     console.log(connectMessage);
@@ -285,13 +329,16 @@ class Room {
   /**
    * Disconnects the current host of this room.
    */
+  //TODO create disconnection EVENT
   disconnectHost() {
-    this.host.disconnect();
+    //this.host.disconnect();
     const disconnectMessage = `Host disconnected from room ${this.roomCode}. Timeout countdown begun: `;
-
+    this.host = null;
+    this.status.general = 'no_host';
     this.broadcast(disconnectMessage);
     console.log(disconnectMessage);
     this.roomTimeOut(true);
+    console.log(this.printStats());
   }
 
   /**
@@ -317,7 +364,7 @@ class Room {
    * @returns a result object which holds status and text
    */
   connectController(player: Player, key: string): Result {
-    const result: Result = { status: Status.ERROR, text: "Cause unknown" }
+    const result: Result = { status: ResultStatus.ERROR, text: "Cause unknown" }
     //console.log(`Room ${this.roomCode}: Connecting ${player.playerName} to controller ${controllerKey}...`)
 
     if (player.controller) {
@@ -331,8 +378,10 @@ class Room {
 
     const controller = this.getController(key)
     if (controller) {
-      controller.connectPlayer(player);
-      result.status = Status.SUCCESS;
+      player.controller = controller
+      controller.status = ConnectionStatus.CONNECTED
+      this.controllers.set(controller, player)
+      result.status = ResultStatus.SUCCESS;
       result.text = `Room ${this.roomCode}: ${player.name} connected to controller: ${key}`;
       return result;
     }
@@ -346,63 +395,120 @@ class Room {
   disconnectController(player: Player): Result {
     if (player && player.controller) {
       const controller = player.controller;
-      controller.disconnectPlayer();
-      //player.unassignController();
+      controller.status = ConnectionStatus.DISCONNECTED
+      this.controllers.set(controller, null);
+      player.controller = null;
+
       const text = `${player.name} disconnected from ${controller.key}`;
       this.broadcast(text);
-      return { status: Status.SUCCESS, text: text }
+      return { status: ResultStatus.SUCCESS, text: text }
     }
-    else return { status: Status.ERROR, text: `Nothing to disconnect ${player?.name} from` }
+    else return { status: ResultStatus.ERROR, text: `Nothing to disconnect ${player?.name} from` }
   }
   /**
    * Send a log to the room
    * @param {object} fullMessage text message
    */
-  newLog(fullMessage: WSMessage) {
+  newLog(logMessageParams: { type: string, sender: string, text: string, data?: any }) {
     //process data to return to chat
-    const { sender, text } = fullMessage;
-    //console.log(sender == 'host' ? `[HOST]: ${text}` : `[${sender}]: ${text}`);
-    fullMessage.time = new Date();
-    this.log.push(fullMessage);
-    const fullLogMessage = {
-      type: WSMessageType.FULL_LOG,
-      header: "full_log",
-      sender: 'server',
+    const { type, sender, text } = logMessageParams;
+    console.log(sender == 'host' ? `[HOST]: ${text}` : `[${sender}]: ${text}`);
+    //NOTE we update time to be when the SERVER processed this message. 
+    //The server acts as the unifying reference source on timing
+    this.log.push({
+      sender: sender,
+      type: type.toUpperCase(),
+      text: text,
       time: new Date()
-    }
-    if (this.host.status == ConnectionStatus.CONNECTED) {
-      sendWSMessage(this.host.ws, fullLogMessage, this.log)
+    });
+
+    if (this.host && this.host.status == ConnectionStatus.CONNECTED) {
+      this.host.send({
+        type: WSMessageType.FULL_LOG,
+        header: "full_log",
+        sender: 'server',
+        data: this.log
+      })
     }
     for (var i = 0; i < this.players.length; i++) {
       const player = this.players[i];
-      sendWSMessage(player.ws, fullLogMessage, this.log);
+      player.send({
+        type: WebControllerMessageType.FULL_LOG,
+        header: "full_log",
+        sender: 'server',
+        data: this.log
+      })
     }
   }
+  /**
+   * Updates the player choice contexts for all players
+   */
+  updateAllPlayerChoiceContexts() {
+    this.players.forEach((player) => {
+      if (player.controller) {
+        this.updatePlayerChoiceContext(player)
+      }
+    });
+  }
+  /**
+   * Updates the player choice context for a specific player
+   * @param {Player} player 
+   */
+  updatePlayerChoiceContext(player: Player) {
+    //console.log(`${player.playerName} has key: ${player.controller.key}`)
+    if (player.controller) {
+      const context = this.choiceContexts.get(player.controller.key);
+
+      player.send({
+        type: WebControllerMessageType.CHOICE_CONTEXT,
+        header: "choice_context",
+        sender: "room",
+        data: context
+      })
+    }
+  }
+
+  updateAllPlayerGameContext() {
+    if (this.gameContext != null) {
+      for (var i = 0; i < this.players.length; i++) {
+        const player = this.players[i];
+        this.updatePlayerGameContext(player);
+      }
+    }
+  }
+
+
+  updatePlayerGameContext(player: Player) {
+    if (this.gameContext != null) {
+      player.send({
+        type: WebControllerMessageType.GAME_CONTEXT,
+        header: "game_context",
+        sender: "room",
+        data: this.gameContext
+      })
+    }
+    console.log(`Sent game_context to ${player.name}. Data:${this.gameContext}`)
+  }
+
+
   /**
    * Parse the GameContext data from a WebSocket message
    * @param {Object} incomingMsg 
    */
   parseGameContext(incomingMsg: WSMessage) {
-    if (incomingMsg.data) {
-      this.gameContext = JSON.parse(incomingMsg.data);
-      this.updateGameContext();
+    console.log(`updating game context`)
+    if (!incomingMsg.data) {
+      console.log(`No game_context recieved!`)
+      return;
     }
+
+    this.gameContext = JSON.parse(incomingMsg.data);
+    console.log("**GAME CONTEXT**")
+    console.log(this.gameContext)
+    this.updateAllPlayerGameContext();
+
   }
 
-  updateGameContext() {
-    if (this.gameContext != null) {
-      for (var i = 0; i < this.players.length; i++) {
-        const player = this.players[i];
-        const message = {
-          type: WSMessageType.UPDATE,
-          header: "game_context",
-          sender: "server",
-          time: new Date(),
-        }
-        sendWSMessage(player.ws, message, this.gameContext);
-      }
-    }
-  }
   /** Receive a player choice context and then send it to that player */
   parsePlayerChoiceContext(incomingMsg: WSMessage) {
     if (!incomingMsg.data) {
@@ -417,146 +523,238 @@ class Room {
       console.warn(text);
       return;
     }
-    else {
-      this.choiceContexts.set(controllerKey, choiceContext);
-      const controller = this.getController(controllerKey)
-      if (controller && controller.player) {
-        const player = controller.player;
-        const message = {
-          type: WSMessageType.UPDATE,
-          header: "choice_context",
-          sender: "server",
-          time: new Date()
-        }
-        sendWSMessage(player.ws, message, choiceContext);
+
+    this.choiceContexts.set(controllerKey, choiceContext);
+    const controller = this.getController(controllerKey)
+
+    if (!controller) {
+      return;
+    }
+    const player = this.controllers.get(controller)
+    if (controller && player) {
+      this.updatePlayerChoiceContext(player);
+    }
+
+
+  }
+  parseControllerInput(incomingMsg: any, player: Player) {
+    const { header, data, inputData, controllerKey } = incomingMsg
+    if (!player.controller) {
+      console.log(`*ERROR* Recieved Controller Input from ${player.name}, but player does not have a controller assigned!`);
+      return;
+    }
+    if (header === "choice") {
+      if (!data) {
+        //send the player an error response.
+        player.send({
+          type: WebControllerMessageType.ROOM,
+          header: "missing_data",
+          sender: "room",
+          status: ResultStatus.ERROR,
+          textData: {
+            title: "Error: Missing Data",
+            text: 'Could not find data for submitted choice'
+          }
+        })
+      }
+      else {
+        const choice = data;
+        console.log(`Received Choice!`)
+        //console.log(choice);
+        this.updatePlayerSelectedChoice(player, choice)
       }
     }
-  }
-  /**
-   * Updates the player choice contexts for all players
-   */
-  updateAllPlayerChoiceContexts() {
-    const message = {
-      type: WSMessageType.UPDATE,
-      header: "choice_context",
-      sender: "server",
-      time: new Date()
-    }
-    this.controllers.forEach((controller) => {
-      const context = this.choiceContexts.get(controller.key);
-      if (controller.player)
-        sendWSMessage(controller.player.ws, message, context);
-    });
-  }
-  /**
-   * Updates the player choice context for a specific player
-   * @param {Player} player 
-   */
-  updatePlayerChoiceContext(player: Player) {
-    //console.log(`${player.playerName} has key: ${player.controller.key}`)
-    if (player.controller) {
-      const context = this.choiceContexts.get(player.controller.key);
-      const message = {
-        type: WSMessageType.UPDATE,
-        header: "choice_context",
-        sender: "server",
-        time: new Date()
+
+    if (header === "button") {
+      if (!inputData) {
+        player.send({
+          type: WebControllerMessageType.ROOM,
+          header: "missing_data",
+          sender: "room",
+          status: ResultStatus.ERROR,
+          textData: {
+            title: "Error: Missing Data",
+            text: 'Could not find data for choice button'
+          }
+        });
+        return;
       }
-      sendWSMessage(player.ws, message, context);
+      var newChoice: Choice = {
+        controllerKey: player.controller.key,
+        choiceID: inputData.fieldName,
+        choiceName: inputData.value
+      }
+      this.updatePlayerSelectedChoice(player, newChoice);
     }
   }
 
-  parseClientCommand(incomingMsg: WSMessage, player: Player) {
-    const { header, data } = incomingMsg
-    const response: WSMessage = {
-      type: WSMessageType.SERVER,
-      header: "",
-      sender: "server",
-      time: new Date(),
-    }
-    switch (header) {
-      case "choice":
-        if (!data) {
-          response.header = "error_parsing_command";
-          response.status = Status.ERROR;
-          response.text = 'Could not find data for submitted choice'
-          break;
-        }
-        else {
-          const choice = JSON.parse(data);
-          console.log(`Received Choice!`)
-          //console.log(choice);
-          this.updatePlayerSelectedChoice(player, choice)
-        }
-        break;
-    }
 
-    sendWSMessage(player.ws, response);
-  }
+  parsePlayerUpdateRequest(incomingMsg: WSMessage, player: Player) {
 
-
-  parseClientRequest(incomingMsg: WSMessage, player: Player) {
-    const reply: WSMessage = {
-      type: WSMessageType.UPDATE,
-      header: "",
-      sender: "server",
-      time: new Date(),
-    }
-    let data = {};
-    let result: Result = { status: Status.ERROR }
     switch (incomingMsg.header) {
-      case "game_context":
-        reply.header = incomingMsg.header;
-        data = this.gameContext;
-
+      case "get_choice_context":
         //NOTE when we update game_context, we will automatiicaly send choice context as well
         this.updatePlayerChoiceContext(player);
         break;
-
-      case "controller_connection":
-        const controllerKey = incomingMsg?.controllerKey;
-        if (!controllerKey) {
-          result.status = Status.ERROR;
-          result.text = "No controller key attached to controller connect request";
-          break;
-        }
-
-        result = this.connectController(player, controllerKey)
-        console.log(`${result.status}: ${result.text}`)
-        reply.header = incomingMsg.header;
-        reply.status = result.status;
-        reply.text = result.text;
-        sendWSMessage(player.ws, reply);
-        this.updatePlayerChoiceContext(player);
-        break;
-      case "controller_disconnection":
-        result = this.disconnectController(player);
-        reply.status = result.status;
-        reply.text = result.text;
-        reply.header = "controller_connection"
+      case "get_game_context":
+        this.updatePlayerGameContext(player);
         break;
     }
-    sendWSMessage(player.ws, reply, data)
   }
-  updatePlayerSelectedChoice(player: Player, choice: any) {
+
+  parsePlayerControllerCommand(incomingMsg: WSMessage, player: Player) {
+    let data;
+    if (incomingMsg.sender == "host" && incomingMsg.data) {
+      data = JSON.parse(incomingMsg.data);
+    }
+    else {
+      data = incomingMsg.data;
+    }
+
+    if (!this.host) {
+      player.send({
+        header: "controller_connect",
+        sender: "room",
+        type: WebControllerMessageType.ROOM,
+        status: ResultStatus.ERROR,
+        textData: {
+          title: "Error connecting to controller",
+          text: "Can't connect right now because there's no game running"
+        }
+      })
+      return;
+    }
+
+    if (incomingMsg.header == "controller_connect") {
+      if (!data) {
+        player.send({
+          type: WebControllerMessageType.CONTROLLER,
+          status: ResultStatus.ERROR,
+          sender: "room",
+          header: "controller_connect",
+          textData: {
+            title: "Missing Data",
+            text: "No data attached to connect request!",
+          }
+        })
+        return;
+      }
+      const controllerKey = data.key;
+      if (!controllerKey) {
+        player.send({
+          header: "controller_connect",
+          sender: "room",
+          type: WebControllerMessageType.ROOM,
+          status: ResultStatus.ERROR,
+          textData: {
+            title: "Missing Data",
+            text: "No Controller Key attached!"
+          }
+        })
+        return;
+      }
+
+      const connect_result = this.connectController(player, controllerKey)
+      console.log(`${connect_result.status}: ${connect_result.text}`)
+      //on success!
+
+
+      //send new stuff to the client and host
+      if (connect_result.status === ResultStatus.SUCCESS) {
+        const test = {
+          type: WebControllerMessageType.CONTROLLER,
+          header: "controller_connect",
+          sender: "room",
+          status: "success",
+          data: {
+            key: controllerKey,
+            playerName: player.name,
+            status: "CONNECTED"
+          },
+          textData: {
+            title: "Controller Connection Status",
+            text: connect_result.text,
+          }
+        }
+        player.send(test);
+
+        console.log(test)
+        this.updatePlayerGameContext(player)
+        this.updatePlayerChoiceContext(player);
+
+        //finally send a new controller connected message back to the host
+        this.host.send({
+          header: "new_controller_connection",
+          type: WSMessageType.ROOM,
+          sender: "room",
+          controllerKey: controllerKey,
+          data: {
+            playerName: player.name,
+            controllerKey: controllerKey
+          }
+        });
+
+        this.broadcast(`${player.name} using Controller ${controllerKey}`)
+      }
+    }
+    if (incomingMsg.header == "controller_disconnect") {
+      let disconnect_result = this.disconnectController(player);
+
+      this.host.send({
+        header: "controller_disconnect",
+        type: WSMessageType.ROOM,
+        sender: "room",
+        controllerKey: incomingMsg.controllerKey,
+        title: `${player.name} disconnected from ${incomingMsg.controllerKey}`
+      });
+    }
+  }
+  parsePlayerRoomCommand(incomingMsg: WSMessage, player: Player) {
+
+    let data;
+    if (incomingMsg.sender == "host" && incomingMsg.data) {
+      data = JSON.parse(incomingMsg.data);
+    }
+    else {
+      data = incomingMsg.data;
+    }
+  }
+
+  updatePlayerSelectedChoice(player: Player, choice: Choice) {
+    //always cache last choice
     this.currentSelectedChoices.set(player, choice);
-    //run a quick check to see if we still need more player choices
-    if (this.currentSelectedChoices.size == this.countActivePlayers()) {
-      //send the choices off!
-      //TODO we will eventually put some logic here in case only certain players at a time can make a decision/choice
-      this.sendSelectedChoices();
+
+    if (!this.host) {
+      console.error(`No host connected. Waiting to send choices.`)
+      return;
+    }
+
+    if (this.gameContext?.mode === "BATCHED") {
+      //run a quick check to see if we still need more player choices
+      if (this.currentSelectedChoices.size == this.countActivePlayers()) {
+        //send the choices off!
+        //TODO we will eventually put some logic here in case only certain players at a time can make a decision/choice
+        this.sendSelectedChoices();
+      }
+    }
+    else if (this.gameContext?.mode === "INSTANT") {
+
+      this.host.send({
+        type: WSMessageType.COMMAND,
+        header: "single_choice",
+        sender: "room",
+        data: choice
+      });
     }
   }
 
   sendSelectedChoices() {
-    const message = {
-      type: WSMessageType.COMMAND,
-      header: "choices",
-      time: new Date(),
-      sender: "server"
+    if (!this.host) {
+      console.error(`No host connected. Waiting to send choices.`)
+      return;
     }
-    let choices: any[] = [];
-    this.currentSelectedChoices.forEach((val, key) => {
+    let choices: Choice[] = [];
+    this.currentSelectedChoices.forEach((val) => {
       choices.push(val);
     })
     const bundledChoices = {
@@ -564,10 +762,17 @@ class Room {
       choices: choices,
     }
     console.log(bundledChoices)
-    //TODO debug is on
-    sendWSMessage(this.host.ws, message, bundledChoices, true);
+
+    this.host.send({
+      type: WSMessageType.COMMAND,
+      header: "choice_bundle",
+      sender: "room",
+      data: bundledChoices
+    });
+
   }
-  currentSelectedChoices = new Map();
+
+  currentSelectedChoices = new Map<Player, Choice>();
 }
 
 export default Room

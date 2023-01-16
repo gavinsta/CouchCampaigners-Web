@@ -2,8 +2,8 @@ import { HStack, Button, ChakraProps } from "@chakra-ui/react";
 import { useState } from "react";
 import { BsHourglassSplit } from "react-icons/bs";
 import { GiAxeSword, GiFire } from "react-icons/gi";
-import Choice from "../types/Choices";
-function ChoiceButton({ choice, selectChoice, setHoverChoice }:
+import { Choice } from "../../types/ConnectionInterfaces";
+function CombatChoiceButton({ choice, selectChoice, setHoverChoice }:
   {
     choice: Choice,
     selectChoice: (choice: Choice) => void,
@@ -72,4 +72,4 @@ function ChoiceButton({ choice, selectChoice, setHoverChoice }:
   )
 }
 
-export default ChoiceButton
+export default CombatChoiceButton

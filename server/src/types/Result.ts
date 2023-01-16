@@ -1,7 +1,9 @@
-import { Status } from "./enums/Status"
+import { ResultStatus } from "./enums/Status"
 
 type Result = {
-  status: Status
+  /** Result of the action */
+  status: ResultStatus
+  /**Message related to the result */
   text?: string
 
 }

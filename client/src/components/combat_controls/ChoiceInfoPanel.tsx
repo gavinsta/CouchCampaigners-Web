@@ -1,5 +1,5 @@
 import { BoxProps } from "@chakra-ui/react";
-import Choice from "../types/Choices";
+import { Choice } from "../../types/ConnectionInterfaces";
 
 export const ChoiceInfoPanel: React.FC<{
   selectedChoice: Choice | null,
@@ -8,14 +8,13 @@ export const ChoiceInfoPanel: React.FC<{
   function presentChoiceInfo(choice: Choice) {
     //TODO flesh out the choice panel
     if (choice) {
-      switch (choice.type) {
-        case "COMBAT":
-          return (<>
-            <div>{choice.choiceName}</div>
-            <div>{choice.choiceDescription}</div>
-            <div>{choice.attachedData}</div>
-          </>);
-      }
+
+      return (<>
+        <div>{choice.choiceName}</div>
+        <div>{choice.choiceDescription}</div>
+        <div>{choice.attachedData}</div>
+      </>);
+
     }
   }
   return (<><div

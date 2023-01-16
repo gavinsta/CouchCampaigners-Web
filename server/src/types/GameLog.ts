@@ -1,8 +1,8 @@
 type GameLog = {
   sender: string,
-  header: string,
-  text?: string,
-  data?: string,
+  type: string,
+  text: string,
+  data?: any,
   time: Date,
 }
 

@@ -1,7 +1,7 @@
 import { BoxProps, Button, ButtonGroup, Grid, GridItem } from "@chakra-ui/react";
-import Choice from "../types/Choices";
-import ChoiceButton from "./ChoiceButton";
-function ChoiceButtonsDisplay(
+import { Choice } from "../../types/ConnectionInterfaces";
+import CombatChoiceButton from "./CombatChoiceButton";
+function CombatChoiceButtonsDisplay(
   { gridArea, submitChoice, choices, selectChoice, back, clearSelection, setHoverChoice }:
     {
       gridArea: string,
@@ -21,7 +21,7 @@ function ChoiceButtonsDisplay(
     const choiceButtons = []
     for (let i = 0; i < choices.length; i++) {
       const choice = choices[i];
-      const newButton = <ChoiceButton
+      const newButton = <CombatChoiceButton
         choice={choice}
         selectChoice={selectChoice}
         setHoverChoice={setHoverChoice}
@@ -78,4 +78,4 @@ function ChoiceButtonsDisplay(
   </Grid>
 }
 
-export default ChoiceButtonsDisplay
+export default CombatChoiceButtonsDisplay
