@@ -1,29 +1,51 @@
 import { ButtonGroup, Grid, GridItem, IconButton, Stack, Text } from "@chakra-ui/react";
 import { AiFillCaretLeft, AiFillCaretRight, AiFillCaretDown, AiFillCaretUp } from "react-icons/ai";
 
-interface DirectionalButtonsParams {
+interface FullDirectionalButtonsParams {
   directions: "all" | "vertical" | "horizontal",
   label?: string,
   output: (direction: string) => void
 }
-function Left() {
-  return <IconButton aria-label={"choose_left"} colorScheme="blue" icon={<AiFillCaretLeft />} fontSize={40} />
+interface DirectionalButtonParams {
+  action: (value: string) => void
+}
+export function Left({ action }: DirectionalButtonParams) {
+  return <IconButton aria-label={"choose_left"}
+    onClick={() => {
+      action("left");
+    }}
+    colorScheme="blue" icon={<AiFillCaretLeft />} fontSize={40} />
 }
 
-function Right() {
-  return <IconButton aria-label={"choose_left"} colorScheme="blue" icon={<AiFillCaretRight />} fontSize={40} />
+export function Right({ action }: DirectionalButtonParams) {
+  return <IconButton aria-label={"choose_right"}
+    onClick={() => {
+      action("right");
+    }}
+    colorScheme="blue" icon={<AiFillCaretRight />} fontSize={40} />
 }
 
-function Up(action: (string)) {
-  return <IconButton aria-label={"choose_left"} colorScheme="blue" icon={<AiFillCaretUp />} fontSize={40} />
+export function Up({ action }: DirectionalButtonParams) {
+  return <IconButton
+    aria-label={"choose_up"}
+    onClick={() => {
+      action("up");
+    }}
+    colorScheme="blue" icon={<AiFillCaretUp />} fontSize={40} />
 }
 
-function Down() {
-
+export function Down({ action }: DirectionalButtonParams) {
+  return <IconButton aria-label={"choose_down"}
+    onClick={() => {
+      action("down");
+    }}
+    colorScheme="blue" icon={<AiFillCaretDown />} fontSize={40} />
 }
-const DirectionalButtons = (params: DirectionalButtonsParams) => {
+const DirectionalButtons = (params: FullDirectionalButtonsParams) => {
 
   const { directions, label, output } = params;
+
+
 
   return <Grid
     templateAreas={`"ul um ur""cl cm cr""bl bm br"`}

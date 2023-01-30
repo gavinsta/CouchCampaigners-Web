@@ -1,4 +1,4 @@
-import { Box, BoxProps, Heading, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Stack, Text } from "@chakra-ui/react"
+import { Box, Heading, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack, Stack, Text } from "@chakra-ui/react"
 import React, { useState } from "react";
 
 function BravesSelector() {

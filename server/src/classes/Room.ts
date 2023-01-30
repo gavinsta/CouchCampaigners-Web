@@ -150,7 +150,11 @@ class Room {
           title: `Successfully Joined ${this.roomCode}`,
         },
         status: ResultStatus.SUCCESS,
-        data: { "roomCode": this.roomCode, "currentPlayers": this.countActivePlayers() }
+        data: {
+          "roomCode": this.roomCode,
+          "currentPlayers": this.countActivePlayers(),
+          "playerName": playerName
+        }
       }
     )
     this.broadcast(text);

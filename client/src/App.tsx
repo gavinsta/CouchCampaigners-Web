@@ -1,12 +1,10 @@
-import logo from './logo.svg';
-import './App.css';
+
 import { GameControllerContextProvider } from './components/contexts/GameControllerContext';
-import { RoomControls } from './components/screens/RoomControls';
-import { StyleContextProvider } from './components/contexts/StyleContext';
-import { MainTabs } from './components/screens/MainTabs';
-import { ChakraProvider, extendTheme, Grid } from '@chakra-ui/react'
+
+import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 import { ConnectionContextProvider } from './components/contexts/ConnectionContext';
 import MainPage from './components/pages/MainPage';
+
 const theme = extendTheme({
   colors: {
     govy:
@@ -33,6 +31,7 @@ function App() {
         </GameControllerContextProvider>
       </ConnectionContextProvider>
     </ChakraProvider>
+
   );
 }
 

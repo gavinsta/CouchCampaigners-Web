@@ -6,12 +6,15 @@ import { RiZzzFill } from 'react-icons/ri'
 import GameLog from "../types/GameLog";
 import { IncomingWSMessage, MessageType } from "../types/ClientWSMessage";
 import { useConnectionContext } from "./contexts/ConnectionContext";
+import useWindowDimensions from "../hooks/useWindowDimensions";
+import useCheckMobileScreen from "../hooks/useCheckMobileScreen";
 export function LogDisplay() {
   const { sendWSText, roomInfo, fullLog } = useConnectionContext();
   const [text, setText] = useState<string>("");
   const toast = useToast();
   const myRef = useRef(null)
-
+  const { height } = useWindowDimensions();
+  const isMobile = useCheckMobileScreen();
   function formatLog(log: GameLog) {
     const str = `[${log.time}] ${log.sender}: ${log.text}`;
     switch (log.type) {
@@ -49,7 +52,7 @@ export function LogDisplay() {
   return (
     <Grid
       templateRows='minmax(100%,auto) min-content'
-      height={'70vh'}
+      height={isMobile ? height * 0.5 : height * 0.7}
       gap='1'
     >
       <GridItem

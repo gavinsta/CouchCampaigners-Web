@@ -1,4 +1,4 @@
-import { BoxProps, Button, ButtonGroup, Grid, GridItem } from "@chakra-ui/react";
+import { Button, ButtonGroup, Grid, GridItem } from "@chakra-ui/react";
 import { Choice } from "../../types/ConnectionInterfaces";
 import CombatChoiceButton from "./CombatChoiceButton";
 function CombatChoiceButtonsDisplay(

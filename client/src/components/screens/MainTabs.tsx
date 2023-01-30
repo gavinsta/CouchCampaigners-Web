@@ -1,15 +1,16 @@
-import { useStyleContext } from "../contexts/StyleContext";
+
 import { CombatControlsDisplay } from "../combat_controls/CombatControlsDisplay";
 import { LogDisplay } from "../LogDisplay";
-import { Tabs, TabList, TabPanels, Tab, TabPanel, BoxProps, Box, Heading, Center } from '@chakra-ui/react'
-import { useConnectionContext } from "../contexts/ConnectionContext";
+import { Tabs, TabList, TabPanels, Tab, TabPanel, BoxProps } from '@chakra-ui/react'
+
 import { useGameControllerContext } from "../contexts/GameControllerContext";
 import CharacterCreationControlDisplay from "../character_selection/CharacterCreationControlDisplay";
+import useWindowDimensions from "../../hooks/useWindowDimensions";
 
-export const MainTabs: React.FC<BoxProps> = ({ height }) => {
+export const MainTabs: React.FC<BoxProps> = ({ }) => {
 
   const { gameContext } = useGameControllerContext();
-
+  const { height } = useWindowDimensions();
   function contextDependentControls() {
     if (!gameContext) return;
     if (gameContext.sceneType === "CHARACTER_SELECTION") {
@@ -25,17 +26,23 @@ export const MainTabs: React.FC<BoxProps> = ({ height }) => {
       isFitted
       variant='enclosed-colored'
       colorScheme={'govy'}
-      h={'85vh'}>
+      h={height * 0.7}>
       <TabList
         h={'5vh'}
         mb='1em'>
-        <Tab>Controls</Tab>
+        <Tab>Character Creation</Tab>
+        <Tab>Combat Controls</Tab>
         <Tab>Log</Tab>
       </TabList>
       <TabPanels p='1rem'>
         <TabPanel>
+          <CharacterCreationControlDisplay />
+        </TabPanel>
+        <TabPanel>
+          <CombatControlsDisplay />
           {
-            contextDependentControls()
+            //TODO revert to calling context-dependent controls
+            //contextDependentControls()
           }
 
         </TabPanel>

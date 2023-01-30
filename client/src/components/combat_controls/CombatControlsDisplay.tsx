@@ -1,9 +1,9 @@
 import { useGameControllerContext } from "../contexts/GameControllerContext";
 import { ChoiceInfoPanel } from "./ChoiceInfoPanel";
-import { useState, useEffect, useRef } from "react";
-import { BsHourglassSplit } from "react-icons/bs";
-import { GiFire, GiAxeSword } from "react-icons/gi";
-import { Grid, GridItem, Icon, Button, ButtonGroup, Stack, HStack } from '@chakra-ui/react'
+import { useState, useEffect } from "react";
+//import { BsHourglassSplit } from "react-icons/bs";
+//import { GiFire, GiAxeSword } from "react-icons/gi";
+import { Grid, GridItem } from '@chakra-ui/react'
 import { Choice } from "../../types/ConnectionInterfaces";
 import CombatChoiceButtonsDisplay from "./CombatChoiceButtonDisplay";
 export function CombatControlsDisplay() {
@@ -85,7 +85,7 @@ export function CombatControlsDisplay() {
       changed.pop();
       setExpanded(changed);
     }
-    else if (expanded.length == 1) {
+    else if (expanded.length === 1) {
       setExpanded([]);
     }
   }

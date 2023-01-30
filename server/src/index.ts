@@ -3,16 +3,17 @@ import bodyParser from "body-parser";
 import http from "http"
 import { v4 } from "uuid"
 import dotenv from "dotenv"
+import cors from "cors"
 import { generateKey } from "./utils/generator_functions"
 //import { json } from "body-parser"
 //const { format } = require('path');
 import Room from "./classes/Room"
-import Player from "./classes/Player";
+import path from "path";
 import { ConnectionStatus, ResultStatus } from "./types/enums/Status";
 import Host from "./classes/Host";
 import { WebSocketServer, WebSocket } from "ws";
 import ExtWebSocket from "./classes/ExtWebSocket";
-import { WSMessageType, WSMessage } from "./types/WSMessage";
+import assetMaker from "./utils/asset-creation/assetMaker";
 
 dotenv.config()
 const {
@@ -33,6 +34,28 @@ const serverSettings = {
 //
 // Serve static files from the 'webapp' folder.
 //
+app.use(cors());
+
+const app_path = path.join(__dirname, "../../client/build")
+app.use(express.static(app_path))
+//NOTE /assetmaker will be reserved for asset creation tools on the server
+if (process.env.NODE_ENV === "development") {
+
+  app.get('/home', (req: Request, res: Response) => {
+    res.send(`<h1>Server is in development mode!</h1><h2>NODE_ENV: ${process.env.NODE_ENV} <br/></h2>`)
+  })
+
+
+  //TODO create separate router for the main app
+  app.get("/app", function (req: Request, res: Response) {
+    res.sendFile(path.join(app_path, "index.html"))
+  })
+  app.use("/assetmaker", assetMaker)
+
+  app.get('/', (req: Request, res: Response) => {
+    res.redirect('/home')
+  });
+}
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
   extended: true
@@ -41,6 +64,7 @@ app.use(bodyParser.urlencoded({
 // Create an HTTP server.
 //
 const server = http.createServer(app);
+
 
 //
 // Create a WebSocket server completely detached from the HTTP server.

@@ -1,13 +1,16 @@
-import { Center, Container, Heading, HStack, Stack } from "@chakra-ui/react";
+import { HStack, Spacer, Stack } from "@chakra-ui/react";
 import { useConnectionContext } from "../contexts/ConnectionContext";
 import { RoomControls } from "../screens/RoomControls";
 import { MainTabs } from "../screens/MainTabs";
 import { WebControllerPanel } from "../screens/ControllerConnectionPanel";
+import useCheckMobileScreen from "../../hooks/useCheckMobileScreen";
+
 
 const MainPage = () => {
-  const { roomInfo } = useConnectionContext();
-  return <Stack>
-    <MainJoinRoomSection orientation="horizontal" />
+
+  return <Stack
+  >
+    <MainJoinRoomSection orientation={useCheckMobileScreen() ? "vertical" : "horizontal"} />
     <MainTabs />
   </Stack>
   /*
@@ -31,16 +34,22 @@ const MainPage = () => {
 }
 
 function MainJoinRoomSection({ orientation = "vertical" }: { orientation?: "horizontal" | "vertical" }) {
+
+  const { roomInfo } = useConnectionContext();
+  if (roomInfo) {
+    //TODO add a collapse button
+  }
   if (orientation === "horizontal") {
-    return (<HStack>
+    return (<HStack padding={5}>
 
       <RoomControls />
+      <Spacer />
       <WebControllerPanel />
     </HStack>)
   }
   else {
     return (
-      <Stack>
+      <Stack padding={5}>
         <RoomControls />
         <WebControllerPanel />
       </Stack>

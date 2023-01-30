@@ -1,9 +1,8 @@
 import { Button, ButtonGroup } from "@chakra-ui/react";
 import { useState } from "react";
-import { MessageType } from "../../types/ClientWSMessage";
 import { useConnectionContext } from "../contexts/ConnectionContext";
 import { useGameControllerContext } from "../contexts/GameControllerContext";
-import InputText from "../InputText";
+import InputText from "../input-controls/InputText";
 
 export function WebControllerPanel({ orientation = "vertical" }: { orientation?: "horizontal" | "vertical" }) {
   const [controllerKey, setControllerKey] = useState<string>("");
@@ -23,7 +22,7 @@ export function WebControllerPanel({ orientation = "vertical" }: { orientation?:
     />
     <Button
       colorScheme={"blue"}
-      w={300}
+
       disabled={!roomInfo}
       onClick={
         () => {

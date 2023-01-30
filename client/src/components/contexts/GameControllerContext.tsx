@@ -1,11 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { parse } from "uuid";
 import { useToast } from '@chakra-ui/react'
-import GameLog from "../../types/GameLog";
 import { Choice } from "../../types/ConnectionInterfaces";
 import { useConnectionContext } from "./ConnectionContext";
 import { IncomingWSMessage, MessageType } from "../../types/ClientWSMessage";
-import { Stats } from "fs";
 interface GameContext {
   sceneType: string,
   mode: string

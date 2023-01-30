@@ -1,6 +1,6 @@
 import { useToast } from "@chakra-ui/react";
-import { createContext, useContext, useEffect, useState } from "react";
-import { IncomingWSMessage, MessageType } from "../../types/ClientWSMessage";
+import { createContext, useContext, useState } from "react";
+import { MessageType } from "../../types/ClientWSMessage";
 import GameLog from "../../types/GameLog";
 import { RoomInfo } from "../../types/RoomInfo";
 
@@ -33,13 +33,8 @@ export const ConnectionContextProvider: React.FC<{
 }> = ({ children }) => {
   const [ws, setWS] = useState<WebSocket | null>(null);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
-  const [playerName, setPlayerName] = useState("");
 
   const [fullLog, setFullLog] = useState([]);
-
-
-  //const [lastMsg, setLastMsg] = useState<IncomingWSMessage | null>(null);
-  let lastMsg: IncomingWSMessage | null = null;
 
 
   const toast = useToast();
@@ -105,9 +100,6 @@ export const ConnectionContextProvider: React.FC<{
         setFullLog(data);
         return;
       }
-      //set the message for ALL OTHER consumers
-      //setLastMsg(message);
-      lastMsg = message;
     });
     setWS(ws);
   };
@@ -142,8 +134,8 @@ export const ConnectionContextProvider: React.FC<{
   }
 
   function parseConnectionMessages(message: any) {
-
-    const { type, header, sender, data, textData } = message
+    //type, sender, textData
+    const { header, data, } = message
     //console.log(message)
     if (header === "join_success") {
       if (!data) {
