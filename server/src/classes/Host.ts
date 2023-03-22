@@ -3,6 +3,8 @@ import * as ws from "ws";
 import { WSMessage, WSMessageType } from "../types/WSMessage";
 import ExtWebSocket from "./ExtWebSocket";
 import Room from "./Room";
+import Player from "./Player";
+import { logError } from "../utils/testing/color_console";
 /** Class for managing the Unity Host Object of rooms (and connections) */
 class Host {
   ws: ExtWebSocket;
@@ -25,9 +27,9 @@ class Host {
     });
     this.ws.on('message', (eventData: string) => {
       console.log("***MESSAGE FROM HOST***")
-      console.log("**EVENT DATA");
-      console.log(eventData);
+
       const message = JSON.parse(eventData);
+      console.log("**PARSED MESSAGE");
       console.log(message);
       this.handleIncomingWSMessage(message);
     });
@@ -85,7 +87,23 @@ class Host {
     //console.log(`Sent to Host:`);
     //console.log(params);
   }
+
+  sendDisconnectController(player: Player, controllerKey: string) {
+    this.send({
+      header: "controller_disconnect",
+      type: WSMessageType.ROOM,
+      sender: "room",
+      controllerKey: controllerKey,
+      title: `${player.name} disconnected from ${controllerKey}`,
+      data: {
+        controllerKey: controllerKey,
+        playerName: player.name
+      }
+    });
+  }
 }
+
+
 interface HostMessageParams {
 
   type: WSMessageType.FULL_LOG | WSMessageType.COMMAND | WSMessageType.REQUEST | WSMessageType.ROOM,

@@ -2112,6 +2112,21 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
+"@fontsource/anton@^4.5.9":
+  version "4.5.9"
+  resolved "https://registry.yarnpkg.com/@fontsource/anton/-/anton-4.5.9.tgz#eb7884f9125b490981fbd6e20f580d3a48d75acd"
+  integrity sha512-/WhUp4eSkphwXcexGz9r3Cj1l3jy4pW5ecGcaVdwf7Cti2WMc+t2xof/dZfTCN3se+egzeZxDCgFbZnbtIvaEw==
+
+"@fontsource/bangers@^4.5.9":
+  version "4.5.9"
+  resolved "https://registry.yarnpkg.com/@fontsource/bangers/-/bangers-4.5.9.tgz#c5c31c7adf01c6559af5e098cce8749f97d78f9e"
+  integrity sha512-LMnEzzgNLH4KRfY+4kJq9he9prCyUNnzulde72vaYggJ927Bw2mnHidoS3uGphLIkiq4kf1qcGFWFFFWPkq8bQ==
+
+"@fontsource/luckiest-guy@^4.5.9":
+  version "4.5.9"
+  resolved "https://registry.yarnpkg.com/@fontsource/luckiest-guy/-/luckiest-guy-4.5.9.tgz#5395d53279d4bc5aa3f5cc8a9f0496148e50da01"
+  integrity sha512-KwJhIUHoepczbQmukHBFHVU1N5NlSpS9EqwL9W/SXpWTxqh7RMk4dEE/IMwtp8F5DGUCxmfl5HVQYpQh5YE18Q==
+
 "@humanwhocodes/config-array@^0.11.8":
   version "0.11.8"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.8.tgz#03595ac2075a4dc0f191cc2131de14fbd7d410b9"

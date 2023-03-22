@@ -29,8 +29,9 @@ export function logWarning(text: string) {
   console.log("\u001b[1;43m WARNING:" + white + " " + text);
 }
 
-export function logError(text: string) {
-  console.log("\u001b[1;41m ERROR:" + white + " " + text);
+export function logError(text: string, header?: string) {
+  if (!header) header = ""
+  console.log("\u001b[1;41m ERROR" + header + ":" + white + " " + text);
 }
 /*
 Different colors

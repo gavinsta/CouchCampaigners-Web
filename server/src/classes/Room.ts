@@ -387,6 +387,7 @@ class Room {
       this.controllers.set(controller, player)
       result.status = ResultStatus.SUCCESS;
       result.text = `Room ${this.roomCode}: ${player.name} connected to controller: ${key}`;
+      this.updatePlayerGameContext(player)
       return result;
     }
 
@@ -469,6 +470,9 @@ class Room {
         sender: "room",
         data: context
       })
+
+      console.log(`CHOICE CONTEXT SENT:`)
+      console.log(context)
     }
   }
 
@@ -520,6 +524,7 @@ class Room {
       return;
     }
     const choiceContext = JSON.parse(incomingMsg.data);
+    console.log("**RECEVING CHOICE CONTEXT OBJECT**")
     console.log(choiceContext)
     const controllerKey = choiceContext.controllerKey;
     if (!controllerKey) {
@@ -541,12 +546,9 @@ class Room {
 
 
   }
-  parseControllerInput(incomingMsg: any, player: Player) {
-    const { header, data, inputData, controllerKey } = incomingMsg
-    if (!player.controller) {
-      console.log(`*ERROR* Recieved Controller Input from ${player.name}, but player does not have a controller assigned!`);
-      return;
-    }
+
+  parseSelectedChoice(msg: any, player: Player) {
+    const { header, data } = msg;
     if (header === "choice") {
       if (!data) {
         //send the player an error response.
@@ -569,6 +571,14 @@ class Room {
       }
     }
 
+  }
+  parseControllerInput(incomingMsg: any, player: Player) {
+    const { header, data, inputData, controllerKey } = incomingMsg
+    if (!player.controller) {
+      console.log(`*ERROR* Recieved Controller Input from ${player.name}, but player does not have a controller assigned!`);
+      return;
+    }
+
     if (header === "button") {
       if (!inputData) {
         player.send({
@@ -578,21 +588,20 @@ class Room {
           status: ResultStatus.ERROR,
           textData: {
             title: "Error: Missing Data",
-            text: 'Could not find data for choice button'
+            text: 'Could not find data for simple input'
           }
         });
         return;
       }
       var newChoice: Choice = {
-        controllerKey: player.controller.key,
-        choiceID: inputData.fieldName,
-        choiceName: inputData.value
+        choiceContext: inputData.fieldName,
+        choiceID: inputData.value
       }
       this.updatePlayerSelectedChoice(player, newChoice);
     }
   }
 
-
+  /**Parse game data requests from the player (requesting current choices, game context, etc.) */
   parsePlayerUpdateRequest(incomingMsg: WSMessage, player: Player) {
 
     switch (incomingMsg.header) {
@@ -605,8 +614,8 @@ class Room {
         break;
     }
   }
-
-  parsePlayerControllerCommand(incomingMsg: WSMessage, player: Player) {
+  /**This method handles managing a Player connecting/disconnecting to a controller on this room */
+  parsePlayerControllerManagment(incomingMsg: WSMessage, player: Player) {
     let data;
     if (incomingMsg.sender == "host" && incomingMsg.data) {
       data = JSON.parse(incomingMsg.data);
@@ -615,21 +624,21 @@ class Room {
       data = incomingMsg.data;
     }
 
-    if (!this.host) {
-      player.send({
-        header: "controller_connect",
-        sender: "room",
-        type: WebControllerMessageType.ROOM,
-        status: ResultStatus.ERROR,
-        textData: {
-          title: "Error connecting to controller",
-          text: "Can't connect right now because there's no game running"
-        }
-      })
-      return;
-    }
-
+    //NOTE Connecting to controller
     if (incomingMsg.header == "controller_connect") {
+      if (!this.host) {
+        player.send({
+          header: "controller_connect",
+          sender: "room",
+          type: WebControllerMessageType.CONTROLLER,
+          status: ResultStatus.ERROR,
+          textData: {
+            title: "Error connecting to controller",
+            text: "Can't connect right now because there's no game running"
+          }
+        })
+        return;
+      }
       if (!data) {
         player.send({
           type: WebControllerMessageType.CONTROLLER,
@@ -648,7 +657,7 @@ class Room {
         player.send({
           header: "controller_connect",
           sender: "room",
-          type: WebControllerMessageType.ROOM,
+          type: WebControllerMessageType.CONTROLLER,
           status: ResultStatus.ERROR,
           textData: {
             title: "Missing Data",
@@ -665,7 +674,7 @@ class Room {
 
       //send new stuff to the client and host
       if (connect_result.status === ResultStatus.SUCCESS) {
-        const test = {
+        const successMessage = {
           type: WebControllerMessageType.CONTROLLER,
           header: "controller_connect",
           sender: "room",
@@ -680,15 +689,16 @@ class Room {
             text: connect_result.text,
           }
         }
-        player.send(test);
+        player.send(successMessage);
 
-        console.log(test)
+        //console.log(successMessage)
         this.updatePlayerGameContext(player)
         this.updatePlayerChoiceContext(player);
 
-        //finally send a new controller connected message back to the host
+        //finally send a new controller connected message back to the host 
+        //NOTE alternative connection message is "controller_connection:reconnect", I guess?
         this.host.send({
-          header: "new_controller_connection",
+          header: "controller_connection:new",
           type: WSMessageType.ROOM,
           sender: "room",
           controllerKey: controllerKey,
@@ -704,13 +714,7 @@ class Room {
     if (incomingMsg.header == "controller_disconnect") {
       let disconnect_result = this.disconnectController(player);
 
-      this.host.send({
-        header: "controller_disconnect",
-        type: WSMessageType.ROOM,
-        sender: "room",
-        controllerKey: incomingMsg.controllerKey,
-        title: `${player.name} disconnected from ${incomingMsg.controllerKey}`
-      });
+      this.host?.sendDisconnectController(player, incomingMsg.controllerKey!)
     }
   }
   parsePlayerRoomCommand(incomingMsg: WSMessage, player: Player) {
@@ -745,6 +749,7 @@ class Room {
 
       this.host.send({
         type: WSMessageType.COMMAND,
+        controllerKey: player.controller?.key,
         header: "single_choice",
         sender: "room",
         data: choice

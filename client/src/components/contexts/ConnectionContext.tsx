@@ -65,20 +65,24 @@ export const ConnectionContextProvider: React.FC<{
     ws.onerror = ws.onmessage = ws.onopen = ws.onclose = null;
     ws.onerror = (e) => {
       console.log(e);
-      toast({ title: "Connection error", description: "Sorry, maybe the server is down?", position: "top", status: "error", duration: 800 })
+      toast({ title: "Connection error", description: "Sorry, maybe the server is down?", position: "top", status: "error", duration: 800 });
+      setRoomInfo(null);
+      ws.close();
     };
     ws.onopen = function () {
 
     };
     ws.onclose = function () {
       setRoomInfo(null);
-
     };
     ws.onmessage = ((event) => {
       const message = JSON.parse(event.data);
       console.log(`From: ${message.sender}, Type: ${message.type}, Header: ${message.header}`)
-      const { type, data, textData, status } = message;
+      const { type, data, textData, status, header } = message;
       if (type === "ROOM") {
+        if (header === "join_reject") {
+          toast({ title: header, description: textData.text, status: "error", position: "top-left" })
+        }
         if (textData) {
           const showStatus: string = status ? status.toLowerCase() : "info"
           toast({ title: textData.title, description: textData.text, status: showStatus as "success" | "info" | "error" | "warning" })
@@ -104,7 +108,7 @@ export const ConnectionContextProvider: React.FC<{
     setWS(ws);
   };
 
-  function sendWSText(params: SendTextParams) {
+  function sendText(params: SendTextParams) {
     const { type, header, title, text } = params
     if (!ws || ws.readyState === ws.CLOSED) {
       console.error(`Trying to send WS message, but no websocket established!`)
@@ -160,7 +164,7 @@ export const ConnectionContextProvider: React.FC<{
         leaveRoom,
         //TODO mayube remove ws
         ws,
-        sendWSText,
+        sendWSText: sendText,
 
 
         fullLog,

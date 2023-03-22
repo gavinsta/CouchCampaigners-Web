@@ -6,6 +6,7 @@ import { Tabs, TabList, TabPanels, Tab, TabPanel, BoxProps } from '@chakra-ui/re
 import { useGameControllerContext } from "../contexts/GameControllerContext";
 import CharacterCreationControlDisplay from "../character_selection/CharacterCreationControlDisplay";
 import useWindowDimensions from "../../hooks/useWindowDimensions";
+import WorldMapControlDisplay from "../world_map_controls/WorldMapControlDisplay";
 
 export const MainTabs: React.FC<BoxProps> = ({ }) => {
 
@@ -19,6 +20,9 @@ export const MainTabs: React.FC<BoxProps> = ({ }) => {
     if (gameContext.sceneType === "COMBAT") {
       return <CombatControlsDisplay />
     }
+    if (gameContext.sceneType === "WORLD_MAP") {
+      return <WorldMapControlDisplay />
+    }
   }
   return (
 
@@ -30,21 +34,13 @@ export const MainTabs: React.FC<BoxProps> = ({ }) => {
       <TabList
         h={'5vh'}
         mb='1em'>
-        <Tab>Character Creation</Tab>
-        <Tab>Combat Controls</Tab>
+        <Tab>Controls</Tab>
         <Tab>Log</Tab>
       </TabList>
       <TabPanels p='1rem'>
         <TabPanel>
-          <CharacterCreationControlDisplay />
-        </TabPanel>
-        <TabPanel>
-          <CombatControlsDisplay />
-          {
-            //TODO revert to calling context-dependent controls
-            //contextDependentControls()
-          }
-
+          <WorldMapControlDisplay />
+          {contextDependentControls()}
         </TabPanel>
         <TabPanel
           h={'100%'}

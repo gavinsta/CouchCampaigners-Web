@@ -6,5 +6,6 @@ export enum ResultStatus {
 export enum ConnectionStatus {
   DISCONNECTED = "DISCONNECTED",
   CONNECTED = "CONNECTED",
-  IDLE = "IDLE"
+  /**When the controller has been inactive for some time */
+  INACTIVE = "INACTIVE"
 }

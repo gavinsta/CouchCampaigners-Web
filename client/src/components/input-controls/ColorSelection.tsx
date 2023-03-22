@@ -1,5 +1,5 @@
 import { Box, HStack } from "@chakra-ui/react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Left, Right } from "../DirectionalButtons"
 
 export type Color = {
@@ -11,22 +11,33 @@ export type Color = {
 interface ColorSelectionProps {
   colors: Color[],
   additionalColors?: number
+  onColorChange: (color: Color) => void
 }
 const ColorSelection = (props: ColorSelectionProps) => {
-  const { colors } = props;
+  const { colors, onColorChange } = props;
   const sideColors = props.additionalColors || 1
   const [index, setIndex] = useState(0);
+  useEffect(() => {
 
+
+  }, [index])
   function shiftIndex(value: number) {
     let val = index + value;
     if (val >= colors.length) {
-      setIndex(val - colors.length);
+      val -= colors.length
+      setIndex(val);
     }
     else if (val < 0) {
-      setIndex(colors.length + val);
+      val += colors.length;
+      setIndex(val);
     }
     else {
       setIndex(val);
+    }
+
+    const color = colors.at(val)
+    if (color) {
+      onColorChange(color);
     }
   }
 
@@ -52,10 +63,12 @@ const ColorSelection = (props: ColorSelectionProps) => {
   return <HStack>
     <Left action={() => {
       shiftIndex(-1)
+
     }} />
     {showSwatches()}
     <Right action={() => {
       shiftIndex(1)
+
     }} />
   </HStack>
 }

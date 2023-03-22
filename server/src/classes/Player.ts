@@ -63,15 +63,16 @@ class Player {
       if (message.type == "INPUT") {
         this.room.parseControllerInput(message, this);
       }
-
+      //parse a request from a player
       if (message.type == "REQUEST") {
         this.room.parsePlayerUpdateRequest(message, this);
       }
       if (message.type === "ROOM") {
+
         this.room.parsePlayerRoomCommand(message, this);
       }
       if (message.type === "CONTROLLER") {
-        this.room.parsePlayerControllerCommand(message, this);
+        this.room.parsePlayerControllerManagment(message, this);
       }
     });
     this.ws.on('close', () => {
