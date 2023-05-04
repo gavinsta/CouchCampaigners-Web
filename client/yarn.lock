@@ -2122,6 +2122,11 @@
   resolved "https://registry.yarnpkg.com/@fontsource/bangers/-/bangers-4.5.9.tgz#c5c31c7adf01c6559af5e098cce8749f97d78f9e"
   integrity sha512-LMnEzzgNLH4KRfY+4kJq9he9prCyUNnzulde72vaYggJ927Bw2mnHidoS3uGphLIkiq4kf1qcGFWFFFWPkq8bQ==
 
+"@fontsource/dela-gothic-one@^4.5.11":
+  version "4.5.11"
+  resolved "https://registry.yarnpkg.com/@fontsource/dela-gothic-one/-/dela-gothic-one-4.5.11.tgz#e9fc08f907bbaaae5dc3ed0b9b0d609268e38dfa"
+  integrity sha512-2WTh9g6buWdBNEySsLNiEWPECXuGh80xSBcPR6VNSDgXXZZpv+dLyE5a+ZQPlvw4udhfJIWK/JlMnhw6T1OLPA==
+
 "@fontsource/luckiest-guy@^4.5.9":
   version "4.5.9"
   resolved "https://registry.yarnpkg.com/@fontsource/luckiest-guy/-/luckiest-guy-4.5.9.tgz#5395d53279d4bc5aa3f5cc8a9f0496148e50da01"

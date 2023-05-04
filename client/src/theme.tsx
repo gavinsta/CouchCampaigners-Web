@@ -1,11 +1,60 @@
-import { extendTheme } from "@chakra-ui/react";
+import { extendTheme, type ThemeConfig } from "@chakra-ui/react";
+
+const config: ThemeConfig = {
+  initialColorMode: 'dark',
+  useSystemColorMode: false,
+}
 
 const theme = extendTheme({
+  config,
   fonts: {
     heading: `'Bangers', 'sans-serif'`,
-    body: `'Luckiest Guy', 'cursive'`
+    body: `'Luckiest Guy', 'cursive'`,
+    clear: `'Anton', 'sans-serif'`,
+    note: `'Dela Gothic One', 'cursive'`
+  },
+  textstyles: {
+    note: {
+      fontFamily: 'note',
+      fontSize: 'sm',
+    }
   },
   colors: {
+    base: {
+      50: '#F2B85A',
+      100: '#C4A572',
+      200: '#A67E3D',
+      300: '#B59E79',
+      400: '#73572A'
+    },
+    dark: {
+      red: '#631C06',
+      orange: '#82520E',
+      olive: '#3D370A',
+      maroon: '#3D1323',
+      teal: '#094D4A'
+
+    },
+    main: {
+      maroon: '#520120',
+      teal: '#08403E',
+      olive: '#706513',
+      orange: '#B57114',
+      red: '#962B09',
+
+    },
+    highlight: {
+      50: '#e6f7ff',
+      100: '#bae7ff',
+      200: '#91d5ff',
+      red: '#E37452',
+      orange: '#C1924F',
+      olive: '#BDAA20',
+      maroon: '#EB025B',
+      teal: '#1AD9D2'
+
+
+    },
     govy:
     {
       50: '#ffedde',

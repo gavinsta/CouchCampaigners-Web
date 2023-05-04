@@ -3,6 +3,7 @@ import { GameControllerContextProvider } from './components/contexts/GameControl
 import '@fontsource/bangers'
 import '@fontsource/luckiest-guy'
 import '@fontsource/anton'
+import "@fontsource/dela-gothic-one"
 import { ChakraProvider } from '@chakra-ui/react'
 import { ConnectionContextProvider } from './components/contexts/ConnectionContext';
 import ControllerPage from './components/pages/ControllerPage';

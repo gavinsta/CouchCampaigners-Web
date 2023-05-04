@@ -8,6 +8,7 @@
     "@emotion/styled": "^11.10.5",
     "@fontsource/anton": "^4.5.9",
     "@fontsource/bangers": "^4.5.9",
+    "@fontsource/dela-gothic-one": "^4.5.11",
     "@fontsource/luckiest-guy": "^4.5.9",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",

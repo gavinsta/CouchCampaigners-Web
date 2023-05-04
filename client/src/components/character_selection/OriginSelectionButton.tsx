@@ -41,11 +41,11 @@ const OriginSelectionButton = ({ origin, onSelect, selected, confirm }: { select
       >
         <Stack>
           <Text width={"90%"}
-
+            textAlign={"center"}
             pl={3} pr={3}
             borderColor="blue.600"
             borderBottomRadius={"15"}
-            bg={"whiteAlpha.400"}
+          //bg={"whiteAlpha.400"}
           >{description}</Text>
           <Button colorScheme={"blue"}
             disabled={!selected}

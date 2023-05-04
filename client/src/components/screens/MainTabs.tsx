@@ -14,13 +14,13 @@ export const MainTabs: React.FC<BoxProps> = ({ }) => {
   const { height } = useWindowDimensions();
   function contextDependentControls() {
     if (!gameContext) return;
-    if (gameContext.sceneType === "CHARACTER_SELECTION") {
+    if (gameContext.controlType === "CHARACTER_SELECTION") {
       return <CharacterCreationControlDisplay />
     }
-    if (gameContext.sceneType === "COMBAT") {
+    if (gameContext.controlType === "COMBAT") {
       return <CombatControlsDisplay />
     }
-    if (gameContext.sceneType === "WORLD_MAP") {
+    if (gameContext.controlType === "WORLD_MAP") {
       return <WorldMapControlDisplay />
     }
   }
@@ -29,17 +29,17 @@ export const MainTabs: React.FC<BoxProps> = ({ }) => {
     <Tabs
       isFitted
       variant='enclosed-colored'
-      colorScheme={'govy'}
       h={height * 0.7}>
       <TabList
         h={'5vh'}
         mb='1em'>
-        <Tab>Controls</Tab>
+        <Tab>Controller</Tab>
         <Tab>Log</Tab>
       </TabList>
       <TabPanels p='1rem'>
         <TabPanel>
           <WorldMapControlDisplay />
+          <CharacterCreationControlDisplay />
           {contextDependentControls()}
         </TabPanel>
         <TabPanel

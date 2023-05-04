@@ -1,10 +1,11 @@
-import { Button, ButtonGroup, Center, GridItem, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
+import { Accordion, AccordionButton, AccordionIcon, AccordionItem, AccordionPanel, Box, Button, ButtonGroup, Center, GridItem, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import { useGameControllerContext } from "../contexts/GameControllerContext";
 import useCheckMobileScreen from "../../hooks/useCheckMobileScreen";
 import ColorSelection, { Color } from "../input-controls/ColorSelection";
 import { useEffect, useState } from "react";
 import OriginSelectionButton from "./OriginSelectionButton";
 import { useConnectionContext } from "../contexts/ConnectionContext";
+import CollapsableHeading from "../generic/CollapsableHeading";
 const CharacterCreationControlDisplay = () => {
 
 
@@ -96,6 +97,11 @@ const CharacterCreationControlDisplay = () => {
   },
   ]
 
+  const _expanded = {
+    bg: 'blue.400',
+    color: 'white'
+  }
+
   function sendColor(fieldName: string, color: Color) {
     sendButtonInput(fieldName, `${color.r / 255},${color.g / 255},${color.b / 255},${color.a}`)
   }
@@ -170,7 +176,8 @@ const CharacterCreationControlDisplay = () => {
         description: processOriginText(description)
       }
       return (
-        <GridItem>
+        <GridItem
+        >
           <OriginSelectionButton selected={selectedOrigin ? selectedOrigin.name === origin.name : false}
             onSelect={() => {
               if (selectedOrigin && origin.name === selectedOrigin.name) {
@@ -202,53 +209,100 @@ const CharacterCreationControlDisplay = () => {
   }
 
   function appearanceSelection() {
-    return (<Stack>
-      <Center>
-        <Stack>
-          <Heading textAlign="center"
-            fontSize={20}>Skin Color</Heading>
-          <ColorSelection colors={skinColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:skin`, color)} />
-        </Stack>
-      </Center>
-      <Center>
-        <Stack>
-          <Heading
-            textAlign="center"
-            fontSize={20}>Primary Color</Heading>
-          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:primary`, color)} />
-        </Stack>
+    return (<Center width={isMobile ? '100%' : ''}>
+      <Stack spacing={5}>
+        <CollapsableHeading title={"Skin Color"} >
+          <ColorSelection colors={skinColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:skin`, color)} lightnessSlider />
 
-      </Center>
-      <Center>
-        <Stack>
-          <Heading textAlign="center"
-            fontSize={20}>Secondary Color</Heading>
-          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:secondary`, color)} />
-        </Stack>
-      </Center>
-      <Center>
-        <Stack>
-          <Heading textAlign="center"
-            fontSize={20}>Tertiary Color</Heading>
-          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:tertiary`, color)} />
-        </Stack>
-      </Center>
-    </Stack>)
+        </CollapsableHeading>
+
+        <CollapsableHeading title={"Primary Color"} >
+          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:primary`, color)} rSlider gSlider bSlider lightnessSlider />
+        </CollapsableHeading>
+
+        <CollapsableHeading title={"Secondary Color"} >
+          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:secondary`, color)} rSlider gSlider bSlider lightnessSlider />
+        </CollapsableHeading>
+
+        <CollapsableHeading title={"Tertiary Color"} >
+
+          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:tertiary`, color)} rSlider gSlider bSlider lightnessSlider />
+
+        </CollapsableHeading>
+
+        <CollapsableHeading title={"Eye Color"} >
+
+          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:iris`, color)} rSlider gSlider bSlider lightnessSlider />
+        </CollapsableHeading>
+        <CollapsableHeading title={"Primary Hair Color"} >
+          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:hair`, color)} rSlider gSlider bSlider lightnessSlider />
+        </CollapsableHeading>
+        <CollapsableHeading title={"Secondary Hair Color"} >
+          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:secondaryHair`, color)} rSlider gSlider bSlider lightnessSlider />
+        </CollapsableHeading>
+      </Stack>
+    </Center>)
   }
 
 
   return (<>
-    <Heading>Character Creation</Heading>
     <Center>
-      <Stack direction={isMobile ? "column" : "row"}>
-        {setSubScene()}
-        {pronounSelection()}
-      </Stack>
+      <Heading>Character Creation</Heading>
     </Center>
+    <Accordion allowToggle p={4}
+      bg={'blackAlpha.200'}>
+      <AccordionItem>
+        <h2>
+          <AccordionButton _expanded={_expanded}>
+            <Box as='span' flex='1' textAlign='left'>
+              Pronoun Selection
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
 
-    {/**COLOR SELECTION */}
-    {subSceneType === "appearance" ? appearanceSelection() : <></>}
-    {subSceneType === "origin" ? originSelection(pronoun) : <></>}
+        </h2>
+        <AccordionPanel pb={4}>
+          {pronounSelection()}
+        </AccordionPanel>
+      </AccordionItem>
+      <AccordionItem>
+        <h2>
+          <AccordionButton _expanded={_expanded}>
+            <Box as="span" flex='1' textAlign='left'>
+              Origin Selection
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+        </h2>
+        <AccordionPanel pb={4}>
+          {originSelection(pronoun)}
+        </AccordionPanel>
+      </AccordionItem>
+
+      <AccordionItem>
+        <h2>
+          <AccordionButton _expanded={_expanded}>
+            <Box as="span" flex='1' textAlign='left'>
+              Appearance Selection
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+        </h2>
+        <AccordionPanel pb={4} pl={1}>
+          <SimpleGrid columns={isMobile ? 1 : 3}>
+            <GridItem colSpan={2}>
+              {appearanceSelection()}
+            </GridItem>
+            <GridItem>
+              <Text fontFamily={"clear"}>
+                Note that at some values of lightness, the color may appear black or white (or extremely yellow)
+              </Text>
+            </GridItem>
+          </SimpleGrid>
+
+        </AccordionPanel>
+      </AccordionItem>
+    </Accordion>
 
   </>)
 }

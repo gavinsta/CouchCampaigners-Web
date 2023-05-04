@@ -4,7 +4,7 @@ import { Choice } from "../../types/ConnectionInterfaces";
 import { useConnectionContext } from "./ConnectionContext";
 import { IncomingWSMessage, MessageType } from "../../types/ClientWSMessage";
 interface GameContext {
-  sceneType: string,
+  controlType: string,
   subSceneType: string,
   mode: string
 }
