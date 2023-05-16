@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, ButtonGroup, useToast, HStack } from '@chakra-ui/react'
+import { Button, ButtonGroup, useToast, HStack, Stack } from '@chakra-ui/react'
 import { useConnectionContext } from "../contexts/ConnectionContext";
 import InputText from "../input-controls/InputText"
 export function RoomControls({ orientation = "vertical" }: { orientation?: "horizontal" | "vertical" }) {
@@ -22,12 +22,10 @@ export function RoomControls({ orientation = "vertical" }: { orientation?: "hori
   }, []);
 
   return (
-    <ButtonGroup
-
-      orientation={orientation}
+    <ButtonGroup orientation={"vertical"}
       spacing={2}
-      colorScheme={"blue"}>
-      <HStack w={"100"}>
+    >
+      <Stack w={"100"} direction={orientation == "vertical" ? "column" : "row"}>
         <InputText
           value={playerName}
           setValue={setPlayerName}
@@ -38,19 +36,19 @@ export function RoomControls({ orientation = "vertical" }: { orientation?: "hori
           value={roomCode}
           setValue={setRoomCode}
           isActive={!roomInfo}
-          label="CODE"
+          label="ROOM CODE"
         />
-      </HStack>
+      </Stack>
 
       <Button
         w={"100%"}
         onClick={() => {
           if (!roomCode) {
-            toast({ position: "top-right", title: "Missing Room Code", status: "error", duration: 1000 })
+            toast({ variant: "subtle", position: "top-right", title: "Missing Room Code", status: "error", duration: 1000 })
             return;
           }
           if (!playerName) {
-            toast({ position: "top-right", title: "Missing Player Name", status: "error", duration: 1000 })
+            toast({ variant: "subtle", position: "top-right", title: "Missing Player Name", status: "error", duration: 1000 })
             return;
           }
 

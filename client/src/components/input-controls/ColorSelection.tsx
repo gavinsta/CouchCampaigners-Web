@@ -16,21 +16,34 @@ interface ColorSelectionProps {
   gSlider?: boolean,
   bSlider?: boolean,
   additionalColors?: number
-  onColorChange: (color: Color) => void
+  submitColorChange: (color: Color) => void
 }
 const ColorSelection = (props: ColorSelectionProps) => {
-  const { colors, onColorChange, lightnessSlider, rSlider, gSlider, bSlider } = props;
+  const { colors, submitColorChange: submitColorChange, lightnessSlider, rSlider, gSlider, bSlider } = props;
   const sideColors = props.additionalColors || 1
   const [index, setIndex] = useState(0);
   const [currentColor, setCurrentColor] = useState(colors.at(0))
   const [currentAdjustment, setCurrentAdjustment] = useState<Color>({ r: 0, g: 0, b: 0, a: 0 })
   const { isOpen: openRGB, onToggle: toggleRGB } = useDisclosure();
   const { isOpen: openLightness, onToggle: toggleLightness } = useDisclosure();
+  const [throttle, setThrottle] = useState(false)
 
-  useEffect(() => {
+  function onColorChange(_color: Color) {
 
+    if (throttle) {
+      return;
+    }
+    else {
 
-  }, [index])
+      submitColorChange(_color);
+      //console.log(`submitted color! ${_color}`)
+      setThrottle(true);
+      setTimeout(() => {
+        setThrottle(false)
+      }, 300);
+    }
+  }
+
   function shiftIndex(value: number) {
     let val = index + value;
     if (val >= colors.length) {

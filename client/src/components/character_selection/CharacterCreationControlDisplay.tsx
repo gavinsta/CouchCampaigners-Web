@@ -35,7 +35,7 @@ const CharacterCreationControlDisplay = () => {
   // { name: "Disgruntled Monk ", description: "<Player> likes prayer!" }]
   //const subSceneType = gameContext ? gameContext.subSceneType : null
   enum CharacterCreationStages {
-    ORIGIN_PHYSICAL, ORIGIN_CLASS, APPEARANCE, READY
+    ORIGIN_PHYSICAL, ORIGIN_CLASS, APPEARANCE, COLORS, READY
   }
 
   const primaryColors: Color[] = [{
@@ -104,20 +104,6 @@ const CharacterCreationControlDisplay = () => {
 
   function sendColor(fieldName: string, color: Color) {
     sendButtonInput(fieldName, `${color.r / 255},${color.g / 255},${color.b / 255},${color.a}`)
-  }
-
-  function setSubScene() {
-    return (
-      <>
-        <Heading>Selection Stage</Heading>
-        <ButtonGroup orientation="vertical" variant={"outline"}>
-          <Button onClick={() => { setSubSceneType("origin") }}>
-            Origin Selection
-          </Button>
-          <Button onClick={() => { setSubSceneType("appearance") }}>
-            Appearance Selection
-          </Button>
-        </ButtonGroup></>)
   }
 
   function pronounSelection() {
@@ -208,42 +194,129 @@ const CharacterCreationControlDisplay = () => {
     )
   }
 
+  const appearanceButtonStyle = { fontFamily: 'clear', fontSize: 25, width: '100%' }
   function appearanceSelection() {
+    return (
+      <Box >
+
+
+        <SimpleGrid
+          spacing={4}
+          columns={isMobile ? 2 : 3}
+        >
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "head_shape")
+            }}
+              {...appearanceButtonStyle}
+            >
+              Head Shape</Button>
+          </GridItem>
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "hair_front")
+            }}{...appearanceButtonStyle}
+            >
+              Front Hair</Button>
+          </GridItem>
+
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "hair_main")
+            }}{...appearanceButtonStyle}
+            >
+              Main Hair</Button>
+          </GridItem>
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "brows")
+            }}{...appearanceButtonStyle}
+            >
+              Brows</Button>
+
+          </GridItem>
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "eyes")
+            }}{...appearanceButtonStyle}
+            >
+              Eyes</Button>
+          </GridItem>
+
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "iris")
+            }}{...appearanceButtonStyle}
+            >
+              Pupils</Button>
+          </GridItem>
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "ears")
+            }}{...appearanceButtonStyle}
+            >
+              Ears</Button>
+          </GridItem>
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "nose")
+            }}{...appearanceButtonStyle}
+            >
+              Nose</Button>
+          </GridItem>
+          <GridItem>
+            <Button onClick={() => {
+              sendButtonInput("face", "mouth")
+            }}{...appearanceButtonStyle}
+            >
+              Mouth</Button>
+          </GridItem>
+        </SimpleGrid></Box >)
+
+  }
+  function colorSelection() {
     return (<Center width={isMobile ? '100%' : ''}>
       <Stack spacing={5}>
         <CollapsableHeading title={"Skin Color"} >
-          <ColorSelection colors={skinColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:skin`, color)} lightnessSlider />
+          <ColorSelection colors={skinColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:skin`, color)} lightnessSlider />
 
         </CollapsableHeading>
 
         <CollapsableHeading title={"Primary Color"} >
-          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:primary`, color)} rSlider gSlider bSlider lightnessSlider />
+          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:primary`, color)} rSlider gSlider bSlider lightnessSlider />
         </CollapsableHeading>
 
         <CollapsableHeading title={"Secondary Color"} >
-          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:secondary`, color)} rSlider gSlider bSlider lightnessSlider />
+          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:secondary`, color)} rSlider gSlider bSlider lightnessSlider />
         </CollapsableHeading>
 
         <CollapsableHeading title={"Tertiary Color"} >
 
-          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:tertiary`, color)} rSlider gSlider bSlider lightnessSlider />
+          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:tertiary`, color)} rSlider gSlider bSlider lightnessSlider />
 
         </CollapsableHeading>
 
         <CollapsableHeading title={"Eye Color"} >
 
-          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:iris`, color)} rSlider gSlider bSlider lightnessSlider />
+          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:iris`, color)} rSlider gSlider bSlider lightnessSlider />
         </CollapsableHeading>
         <CollapsableHeading title={"Primary Hair Color"} >
-          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:hair`, color)} rSlider gSlider bSlider lightnessSlider />
+          <ColorSelection colors={primaryColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:hair`, color)} rSlider gSlider bSlider lightnessSlider />
         </CollapsableHeading>
         <CollapsableHeading title={"Secondary Hair Color"} >
-          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} onColorChange={(color) => sendColor(`color:secondaryHair`, color)} rSlider gSlider bSlider lightnessSlider />
+          <ColorSelection colors={tertiaryColors} additionalColors={isMobile ? 1 : 2} submitColorChange={(color) => sendColor(`color:secondary_hair`, color)} rSlider gSlider bSlider lightnessSlider />
         </CollapsableHeading>
       </Stack>
     </Center>)
   }
 
+  function finalCheck() {
+    if (selectedOrigin == null) {
+      return false;
+    }
+    //can include other checks here
+    return true;
+  }
 
   return (<>
     <Center>
@@ -289,21 +362,48 @@ const CharacterCreationControlDisplay = () => {
           </AccordionButton>
         </h2>
         <AccordionPanel pb={4} pl={1}>
-          <SimpleGrid columns={isMobile ? 1 : 3}>
-            <GridItem colSpan={2}>
-              {appearanceSelection()}
+          {appearanceSelection()}
+        </AccordionPanel>
+      </AccordionItem>
+
+      <AccordionItem>
+        <h2>
+          <AccordionButton _expanded={_expanded}>
+            <Box as="span" flex='1' textAlign='left'>
+              Color Selection
+            </Box>
+            <AccordionIcon />
+          </AccordionButton>
+        </h2>
+        <AccordionPanel pb={4} pl={1}>
+          <SimpleGrid columns={isMobile ? 1 : 4}>
+            <GridItem colSpan={3}>
+              {colorSelection()}
             </GridItem>
             <GridItem>
-              <Text fontFamily={"clear"}>
-                Note that at some values of lightness, the color may appear black or white (or extremely yellow)
-              </Text>
+              <Center>
+                <Text fontFamily={"clear"}
+                  textAlign={"center"}
+                >
+                  Note that at some values of lightness, the color may appear black or white (or extremes of one hue)
+                </Text>
+              </Center>
             </GridItem>
           </SimpleGrid>
 
         </AccordionPanel>
       </AccordionItem>
     </Accordion>
-
+    <Center>
+      <Button w={'100%'}
+        p={4}
+        disabled={!finalCheck()}
+        onClick={() => {
+          sendButtonInput("ready", "ready")
+          console.log(selectedOrigin)
+        }}
+      >Ready</Button>
+    </Center>
   </>)
 }
 
