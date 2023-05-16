@@ -2,7 +2,9 @@ export enum ResultStatus {
   ERROR = "error",
   SUCCESS = "success",
 }
-
+/**
+ * Statuses of a host or user connection
+ */
 export enum ConnectionStatus {
   DISCONNECTED = "DISCONNECTED",
   CONNECTED = "CONNECTED",

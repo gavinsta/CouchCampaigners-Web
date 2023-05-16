@@ -23,7 +23,9 @@ const {
 const app: Express = express();
 const timeOutDuration = 1000 * 60 * 3;//3 minutes
 
-//memory of all the rooms being run
+const MAX_ROOMS = 100;
+
+//list of all the rooms being run
 let rooms: Room[] = [];
 
 const serverSettings = {
@@ -135,7 +137,7 @@ function tryHostRoom(extWs: ExtWebSocket, roomCode: string, controllerKeys: stri
 
   //create a new Host object
   const host = new Host(extWs);
-  if (room) {
+  if (room && room.controllers.size == controllerKeys.length) {
     //reconnect host
     room.reconnectHost(host);
   }
@@ -176,7 +178,7 @@ async function createNewRoom(host: Host, controllerKey: string[], roomCode: stri
   }
   else {
 
-    assignedRoomCode = 'FALLBACK'//URGENT switch back to original code.
+    assignedRoomCode = 'TESTER'//URGENT switch back to original code.
     // assignedRoomCode = generateKey(serverSettings.keyLength);
     // while (!checkValidRoomCode(assignedRoomCode)) {
     //     assignedRoomCode = generateKey(serverSettings.keyLength);

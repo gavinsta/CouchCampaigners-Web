@@ -12,7 +12,25 @@ import { WebControllerMessageType, WSMessage, WSMessageType } from "../types/WSM
 import WebSocket from "ws";
 import ExtWebSocket from "./ExtWebSocket";
 import { Choice } from "../types/Choice";
-const TIMEOUT_DURATION = 3 * 60
+const TIMEOUT_DURATION = 30 * 1000; //30 seconds 
+//TODO change this it's just for testing
+
+interface RoomStatus {
+  general: "OPEN" | "CLOSED"
+  hostStatus: ConnectionStatus,
+  timeLeft?: number,
+}
+
+interface RoomSettings {
+  messageSettings: {
+    saveChatMessages: boolean,
+    saveSystemMessages: boolean,
+    saveLogMessages: boolean,
+  },
+  /**private, public, etc.*/
+  privacySettings: "PUBLIC" | "PRIVATE"
+}
+
 /** Room objects hold controllerKeys, controllers, hosts, players, etc 
  * and supporting functions
  */
@@ -20,9 +38,9 @@ class Room {
   /**The room code of the room */
   roomCode: string
   /** The status of the room. Should include all things we might need statuses on */
-  status = {
-    general: "open",
-    input: "pending",
+  status: RoomStatus = {
+    general: "OPEN",
+    hostStatus: ConnectionStatus.DISCONNECTED
   };
 
   /** Host object */
@@ -35,15 +53,14 @@ class Room {
   controllers: Map<WebController, Player | null>;
 
   /**Settings object for the Room Object */
-  settings = {
+  settings: RoomSettings = {
     //TODO implement settings
     messageSettings: {
       saveChatMessages: true,
       saveSystemMessages: true,
       saveLogMessages: true,
     },
-    /**private, public, etc.*/
-    privacySettings: "public"
+    privacySettings: "PUBLIC"
   };
   /** Chat and message log of the room */
   log: GameLog[];
@@ -55,7 +72,9 @@ class Room {
   choiceContexts;
 
   /**Reference to timeout if room is scheduled to close */
-  timer: NodeJS.Timeout | null = null;
+  roomCloseTimeout: NodeJS.Timeout | null = null;
+
+  roomCloseIntervalTimer: NodeJS.Timer | null = null;
 
   /**
    * Construct a new room
@@ -96,6 +115,15 @@ class Room {
         text: this.printStats()
       }
     })
+  }
+
+  checkHostStatus() {
+    if (this.host && this.host.ws.readyState === WebSocket.OPEN) {
+      this.status.hostStatus = ConnectionStatus.CONNECTED;
+    }
+    else {
+      this.status.hostStatus = ConnectionStatus.DISCONNECTED;
+    }
   }
 
   /**
@@ -185,6 +213,14 @@ class Room {
       }
     }
     return null;
+  }
+
+  getAllControllerKeys() {
+    let keys: string[] = [];
+    for (var controller of this.controllers.keys()) {
+      keys.push(controller.key);
+    }
+    return keys;
   }
 
   getPlayerControllerKey(name: string) {
@@ -324,10 +360,23 @@ class Room {
   reconnectHost(host: Host) {
     this.host = host;
     host.room = this;
-    const connectMessage = `Host connected to room ${this.roomCode}`;
+    const connectMessage = `Host reconnected to room ${this.roomCode}`;
     this.broadcast(connectMessage);
-    console.log(connectMessage);
+    //console.log(connectMessage);
     this.roomTimeOut(false);
+    host.send({
+      type: WSMessageType.ROOM,
+      header: 'new_room',
+      sender: `room`,
+      title: 'New Room Created!',
+      text: `Now hosting room: ${this.roomCode}.`,
+      data: {
+        roomCode: this.roomCode,
+        status: 'open',
+        controllerKeys: this.getAllControllerKeys(),
+        text: this.printStats()
+      }
+    })
   }
 
   /**
@@ -338,11 +387,12 @@ class Room {
     //this.host.disconnect();
     const disconnectMessage = `Host disconnected from room ${this.roomCode}. Timeout countdown begun: `;
     this.host = null;
-    this.status.general = 'no_host';
+    this.checkHostStatus();
     this.broadcast(disconnectMessage);
-    console.log(disconnectMessage);
+    //console.log(disconnectMessage);
     this.roomTimeOut(true);
-    console.log(this.printStats());
+    this.broadcast(this.printStats());
+    //console.log(this.printStats());
   }
 
   /**
@@ -350,14 +400,39 @@ class Room {
    * @param {Boolean} start if true: starts the timer, if false: stops it.
    */
   roomTimeOut(start: boolean) {
-    if (start && !this.timer) {
-      this.timer = setTimeout(() => {
-        this.status.general = "closed";
+    if (start) {
+      //if we already started a timer, reset it
+      if (this.roomCloseTimeout) {
+        clearTimeout(this.roomCloseTimeout);
+      }
+      const now = new Date().getTime();
+      const endTime = new Date(now + TIMEOUT_DURATION);
+
+      this.broadcast(`Room ${this.roomCode} will close in ${TIMEOUT_DURATION / 1000} seconds.`)
+
+      this.roomCloseIntervalTimer = setInterval(() => {
+        //while current time is less than end time (timeout duration) keep counting down and print the remaining time to the console
+        const now = new Date().getTime();
+        this.status.timeLeft = endTime.getTime() - now;
+        if (Math.floor(this.status.timeLeft / 1000) % 5 === 0 || Math.floor(this.status.timeLeft / 1000) <= 10) {
+          this.broadcast(`Room ${this.roomCode} will close in ${Math.floor(this.status.timeLeft / 1000)} seconds.`)
+        }
+      }, 1000);
+
+      this.roomCloseTimeout = setTimeout(() => {
+        this.status.general = "CLOSED";
+        //console.log(`Room ${this.roomCode} has been closed due to inactivity.`)
+        this.broadcast(`Room ${this.roomCode} has been closed due to inactivity.`)
+        if (this.roomCloseIntervalTimer) {
+          clearInterval(this.roomCloseIntervalTimer);
+        }
       }, TIMEOUT_DURATION);
     }
-    else if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
+    else if (this.roomCloseTimeout) {
+      //if we started a timer, now we can stop it.
+      clearTimeout(this.roomCloseTimeout);
+      if (this.roomCloseIntervalTimer) clearInterval(this.roomCloseIntervalTimer);
+      this.roomCloseTimeout = null;
     }
   }
 
