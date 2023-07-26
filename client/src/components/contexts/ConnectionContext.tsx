@@ -1,32 +1,29 @@
 import { useToast } from "@chakra-ui/react";
 import { createContext, useContext, useState } from "react";
-import { MessageType } from "../../types/ClientWSMessage";
+import { IncomingWSMessage, MessageType } from "../../types/ClientWSMessage";
 import GameLog from "../../types/GameLog";
 import { RoomInfo } from "../../types/RoomInfo";
-
-const siteURL = 'localhost:5050';
+import config from "../../config/index";
+const siteURL = config.connectionURL || "ws://localhost:5050";
 
 interface ContextType {
-  roomInfo: RoomInfo | null,
+  roomInfo: RoomInfo | null;
   joinRoom: (roomCode: string, playerName: string) => void;
-  leaveRoom: () => void,
+  leaveRoom: () => void;
 
-  ws: WebSocket | null,
-  sendWSText: (params: SendTextParams) => void,
+  ws: WebSocket | null;
+  sendWSText: (params: SendTextParams) => void;
 
-  fullLog: GameLog[],
-
+  fullLog: GameLog[];
 }
 export const ConnectionContext = createContext<ContextType>({
-
   roomInfo: null,
-  joinRoom: (roomCode: string, playerName: string) => { },
-  leaveRoom: () => { },
+  joinRoom: (roomCode: string, playerName: string) => {},
+  leaveRoom: () => {},
 
   ws: null,
-  sendWSText: () => { },
+  sendWSText: () => {},
   fullLog: [],
-
 });
 export const ConnectionContextProvider: React.FC<{
   children: React.ReactNode;
@@ -36,7 +33,6 @@ export const ConnectionContextProvider: React.FC<{
 
   const [fullLog, setFullLog] = useState([]);
 
-
   const toast = useToast();
 
   async function joinRoom(roomCode: string, playerName: string) {
@@ -45,78 +41,82 @@ export const ConnectionContextProvider: React.FC<{
     localStorage.setItem("roomCode", roomCode);
     localStorage.setItem("playerName", playerName);
     console.log(`Room code: ${roomCode} \nPlayer Name: ${playerName}`);
-    establishWebSocketConnection(`ws://${siteURL}/?join=${roomCode}&name=${playerName}`);
+    establishWebSocketConnection(
+      `${config.connectionURL}/?join=${roomCode}&name=${playerName}`
+    );
   }
 
   function leaveRoom() {
-    if (ws)
-      ws.close();
-    localStorage.removeItem("roomInfo")
+    if (ws) ws.close();
+    localStorage.removeItem("roomInfo");
     setRoomInfo(null);
-    setFullLog([])
-    toast({ title: "Left the Room", description: "Thanks for playing", position: "top", duration: 1000 })
+    setFullLog([]);
+    toast({
+      title: "Left the Room",
+      description: "Thanks for playing",
+      position: "top",
+      duration: 1000,
+    });
   }
 
   function establishWebSocketConnection(wsURL: string) {
-
     //TODO pass a query to the server first to see if there is even a valid Room to join
     let ws = new WebSocket(wsURL);
 
     ws.onerror = ws.onmessage = ws.onopen = ws.onclose = null;
     ws.onerror = (e) => {
       console.log(e);
-      toast({ title: "Connection error", description: "Sorry, maybe the server is down?", position: "top", status: "error", duration: 800 });
+      toast({
+        title: "Connection error",
+        description: "Sorry, maybe the server is down?",
+        position: "top",
+        status: "error",
+        duration: 800,
+      });
       setRoomInfo(null);
       ws.close();
     };
-    ws.onopen = function () {
-
-    };
+    ws.onopen = function () {};
     ws.onclose = function () {
       setRoomInfo(null);
     };
-    ws.onmessage = ((event) => {
-      const message = JSON.parse(event.data);
-      console.log(`From: ${message.sender}, Type: ${message.type}, Header: ${message.header}`)
+    ws.onmessage = (event) => {
+      const message: IncomingWSMessage = JSON.parse(event.data);
+      console.log(
+        `From: ${message.sender}, Type: ${message.type}, Header: ${message.header}`
+      );
       const { type, data, textData, status, header } = message;
       if (type === "ROOM") {
-        if (header === "join_reject") {
-          toast({ title: header, description: textData.text, status: "error", position: "top-left" })
-        }
-        if (textData) {
-          const showStatus: string = status ? status.toLowerCase() : "info"
-          toast({ title: textData.title, description: textData.text, status: showStatus as "success" | "info" | "error" | "warning" })
-        }
         parseConnectionMessages(message);
         return;
       }
-      if (type === 'FULL_LOG') {
+      if (type === "FULL_LOG") {
         if (!data) {
-          console.error("FULL_LOG message did not contain log")
+          console.error("FULL_LOG message did not contain log");
           return;
         }
 
         //all chat and log messages are sent in a bundle and the client can filter accordingly
         if (!data) {
-          console.warn(`No data present in the chat log!`)
+          console.warn(`No data present in the chat log!`);
           return;
         }
         setFullLog(data);
         return;
       }
-    });
+    };
     setWS(ws);
-  };
+  }
 
   function sendText(params: SendTextParams) {
-    const { type, header, title, text } = params
+    const { type, header, title, text } = params;
     if (!ws || ws.readyState === ws.CLOSED) {
-      console.error(`Trying to send WS message, but no websocket established!`)
-      return
+      console.error(`Trying to send WS message, but no websocket established!`);
+      return;
     }
 
     if (!roomInfo) {
-      console.error(`Trying to send WS message, but no room joined!`)
+      console.error(`Trying to send WS message, but no room joined!`);
       return;
     }
     var playerName = roomInfo.playerName;
@@ -130,8 +130,8 @@ export const ConnectionContextProvider: React.FC<{
       textData: {
         title: title,
         text: text,
-      }
-    }
+      },
+    };
 
     ws.send(JSON.stringify(message));
     console.log(message);
@@ -139,19 +139,35 @@ export const ConnectionContextProvider: React.FC<{
 
   function parseConnectionMessages(message: any) {
     //type, sender, textData
-    const { header, data, } = message
+    const { header, data, textData, status } = message;
     //console.log(message)
-    if (header === "join_success") {
+    if (status === "error") {
+      toast({
+        title: textData ? textData.title : header.split(":")[1],
+        description: textData ? textData.text : "",
+        status: "error",
+        position: "top-left",
+      });
+    } else if (header === "join_room_status") {
       if (!data) {
-        console.error("no room info!")
-
-      }
-
-      if (data) {
-        console.log(data);
+        console.error("no room info!");
+        toast({
+          title: "No room info attached!",
+          description: "We need the room info.",
+          status: "error",
+          position: "top-left",
+        });
+      } else {
+        // console.log(data);
         setRoomInfo(data);
       }
-
+    } else if (textData) {
+      const showStatus: string = status ? status.toLowerCase() : "info";
+      toast({
+        title: textData.title,
+        description: textData.text,
+        status: showStatus as "success" | "info" | "error" | "warning",
+      });
     }
     return;
   }
@@ -162,13 +178,13 @@ export const ConnectionContextProvider: React.FC<{
         roomInfo,
         joinRoom,
         leaveRoom,
-        //TODO mayube remove ws
+        //TODO maybe remove ws
         ws,
         sendWSText: sendText,
 
-
         fullLog,
-      }}>
+      }}
+    >
       {children}
     </ConnectionContext.Provider>
   );
@@ -186,8 +202,8 @@ export const useConnectionContext = () => {
 
 /**Messages to be sent to the server relating to ROOM and LOG functions */
 export interface SendTextParams {
-  type: MessageType.LOG | MessageType.ROOM,
-  header: string,
-  title?: string,
-  text: string,
+  type: MessageType.LOG | MessageType.ROOM;
+  header: string;
+  title?: string;
+  text: string;
 }
