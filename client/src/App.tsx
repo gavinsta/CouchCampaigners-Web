@@ -6,7 +6,7 @@ import '@fontsource/anton'
 import "@fontsource/dela-gothic-one"
 import { Button, ChakraProvider, useDisclosure } from '@chakra-ui/react'
 import { ConnectionContextProvider } from './components/contexts/ConnectionContext';
-import theme from './theme';
+import theme from './styling/theme';
 import useCheckMobileScreen from './hooks/useCheckMobileScreen';
 import { MainTabs } from './components/screens/MainTabs';
 import ConnectionControls, { ConnectionControlDrawer } from './components/pages/ConnectionControls';
