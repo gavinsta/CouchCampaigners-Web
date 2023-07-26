@@ -1,10 +1,11 @@
-import { ResultStatus } from "./enums/Status"
+import { TextData } from "../interfaces";
+import { ResultStatus } from "../enums";
 
 type Result = {
   /** Result of the action */
-  status: ResultStatus
+  status: ResultStatus;
   /**Message related to the result */
-  text?: string
-
-}
-export default Result
+  textData: TextData;
+  data?: any;
+};
+export default Result;

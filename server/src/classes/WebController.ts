@@ -1,15 +1,13 @@
-import { ConnectionStatus } from "../types/enums/Status"
-import Player from "./Player"
+import { ConnectionStatus } from "../enums";
+import Player from "./Player";
 
 class WebController {
-  key: string
-  status: ConnectionStatus
+  key: string;
+  status: ConnectionStatus;
   constructor(controllerKey: string) {
-    this.key = controllerKey
-    this.status = ConnectionStatus.DISCONNECTED
+    this.key = controllerKey;
+    this.status = ConnectionStatus.DISCONNECTED;
   }
-
-
 }
 
-export default WebController
+export default WebController;
